@@ -41,6 +41,7 @@ export function SaleForm({
       amount: 0,
       status: defaultValues?.status || "Pending",
       category: defaultValues?.category || "",
+      date: defaultValues?.date || new Date(),
     }),
     [defaultValues]
   );
@@ -53,11 +54,12 @@ export function SaleForm({
   React.useEffect(() => {
     if (defaultValues) {
       form.reset({
-        ...defaultFormValues,
         ...defaultValues,
       });
     } else {
-      form.reset(defaultFormValues);
+      form.reset({
+        ...defaultFormValues,
+      });
     }
   }, [defaultValues, form, defaultFormValues]);
 
@@ -182,6 +184,28 @@ export function SaleForm({
                     <SelectItem value="Training">Training</SelectItem>
                   </SelectContent>
                 </Select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="date"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Date</FormLabel>
+              <FormControl>
+                <Input
+                  type="date"
+                  className="w-48"
+                  {...field}
+                  disabled={readOnly}
+                  value={field.value ? field.value.toISOString().split("T")[0] : ""}
+                  onChange={(e) => {
+                    field.onChange(new Date(e.target.value));
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

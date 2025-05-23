@@ -23,6 +23,7 @@ export const saleFormSchema = z.object({
   amount: z.number().min(0, "Amount must be positive"),
   status: z.enum(["Completed", "Pending", "Cancelled"]),
   category: z.string().min(2, "Category is required"),
+  date: z.date(),
 });
 
 export type CustomerFormValues = z.infer<typeof customerFormSchema>;

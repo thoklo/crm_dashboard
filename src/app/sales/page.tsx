@@ -46,6 +46,7 @@ export default function SalesPage() {
       id: sales.length + 1,
       ...data,
       createdAt: new Date().toISOString().split("T")[0],
+      date: new Date(),
     };
 
     setSales([...sales, newSale]);
@@ -106,6 +107,7 @@ export default function SalesPage() {
                         | "Pending"
                         | "Cancelled",
                       category: selectedSale.category,
+                      date: selectedSale.date,
                     }
                   : undefined
               }
@@ -179,7 +181,9 @@ export default function SalesPage() {
                         minimumFractionDigits: 2,
                       })}
                     </TableCell>
-                    <TableCell>{sale.createdAt}</TableCell>
+                    <TableCell>
+                      {sale.date.toLocaleDateString()}
+                    </TableCell>
                     <TableCell>
                       <span
                         className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${

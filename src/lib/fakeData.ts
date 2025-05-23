@@ -33,6 +33,7 @@ export type Sale = {
   status: string;
   category: string;
   createdAt: string;
+  date: Date;
 };
 
 const SALE_CATEGORIES = [
@@ -88,6 +89,7 @@ export function generateSales(count: number = 30): Sale[] {
       createdAt: new Date(Date.now() - Math.random() * 10000000000)
         .toISOString()
         .split("T")[0],
+      date: faker.date.past(),
     };
   });
 }
@@ -168,6 +170,7 @@ export const fallbackSales: Sale[] = [
     status: "Completed",
     category: "Software",
     createdAt: "2024-05-20",
+    date: new Date("2024-05-20"),
   },
   {
     id: 2,
@@ -177,5 +180,6 @@ export const fallbackSales: Sale[] = [
     status: "Completed",
     category: "Consulting",
     createdAt: "2024-05-18",
+    date: new Date("2024-05-18"),
   },
 ];
