@@ -126,7 +126,7 @@ export function TaskForm({ defaultValues, onSubmit, onCancel, readOnly }: TaskFo
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white dark:bg-zinc-900">
                   {STATUS_OPTIONS.map((status) => (
                     <SelectItem key={status} value={status}>
                       {status}
@@ -153,7 +153,7 @@ export function TaskForm({ defaultValues, onSubmit, onCancel, readOnly }: TaskFo
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="Select priority" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white dark:bg-zinc-900">
                   {PRIORITY_OPTIONS.map((priority) => (
                     <SelectItem key={priority} value={priority}>
                       {priority}

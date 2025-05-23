@@ -148,7 +148,7 @@ export function CustomerForm({ defaultValues, onSubmit, onCancel, readOnly }: Cu
                   <SelectTrigger>
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white dark:bg-zinc-900">
                     <SelectItem value="Active">Active</SelectItem>
                     <SelectItem value="Inactive">Inactive</SelectItem>
                     <SelectItem value="Pending">Pending</SelectItem>

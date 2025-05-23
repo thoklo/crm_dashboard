@@ -22,6 +22,7 @@ export const saleFormSchema = z.object({
   product: z.string().min(2, "Product name must be at least 2 characters"),
   amount: z.number().min(0, "Amount must be positive"),
   status: z.enum(["Completed", "Pending", "Cancelled"]),
+  category: z.string().min(2, "Category is required"),
 });
 
 export type CustomerFormValues = z.infer<typeof customerFormSchema>;

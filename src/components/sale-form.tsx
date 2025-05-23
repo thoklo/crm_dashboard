@@ -40,6 +40,7 @@ export function SaleForm({
       product: "",
       amount: 0,
       status: defaultValues?.status || "Pending",
+      category: defaultValues?.category || "",
     }),
     [defaultValues]
   );
@@ -146,10 +147,39 @@ export function SaleForm({
                   <SelectTrigger>
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white dark:bg-zinc-900">
                     <SelectItem value="Completed">Completed</SelectItem>
                     <SelectItem value="Pending">Pending</SelectItem>
                     <SelectItem value="Cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="category"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Category</FormLabel>
+              <FormControl>
+                <Select
+                  onValueChange={field.onChange}
+                  disabled={readOnly}
+                  value={field.value}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white dark:bg-zinc-900">
+                    <SelectItem value="Software">Software</SelectItem>
+                    <SelectItem value="Hardware">Hardware</SelectItem>
+                    <SelectItem value="Consulting">Consulting</SelectItem>
+                    <SelectItem value="Subscription">Subscription</SelectItem>
+                    <SelectItem value="Support">Support</SelectItem>
+                    <SelectItem value="Training">Training</SelectItem>
                   </SelectContent>
                 </Select>
               </FormControl>

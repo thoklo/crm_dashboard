@@ -44,9 +44,8 @@ export default function SalesPage() {
   const handleAddSale = (data: SaleFormValues) => {
     const newSale: Sale = {
       id: sales.length + 1,
-      customerId: sales.length + 1,
       ...data,
-      date: new Date().toISOString().split("T")[0],
+      createdAt: new Date().toISOString().split("T")[0],
     };
 
     setSales([...sales, newSale]);
@@ -102,7 +101,11 @@ export default function SalesPage() {
                       customer: selectedSale.customer,
                       product: selectedSale.product,
                       amount: selectedSale.amount,
-                      status: selectedSale.status,
+                      status: selectedSale.status as
+                        | "Completed"
+                        | "Pending"
+                        | "Cancelled",
+                      category: selectedSale.category,
                     }
                   : undefined
               }
@@ -145,6 +148,7 @@ export default function SalesPage() {
               <TableRow>
                 <TableHead>Customer</TableHead>
                 <TableHead>Product</TableHead>
+                <TableHead>Category</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Status</TableHead>
@@ -155,7 +159,7 @@ export default function SalesPage() {
               {sales.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={7}
                     className="text-center text-muted-foreground py-8"
                   >
                     No sales records found.
@@ -168,13 +172,14 @@ export default function SalesPage() {
                       {sale.customer}
                     </TableCell>
                     <TableCell>{sale.product}</TableCell>
+                    <TableCell>{sale.category}</TableCell>
                     <TableCell>
                       $
                       {sale.amount.toLocaleString("en-US", {
                         minimumFractionDigits: 2,
                       })}
                     </TableCell>
-                    <TableCell>{sale.date}</TableCell>
+                    <TableCell>{sale.createdAt}</TableCell>
                     <TableCell>
                       <span
                         className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${

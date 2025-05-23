@@ -25,15 +25,24 @@ export interface Task {
   createdAt: string;
 }
 
-export interface Sale {
+export type Sale = {
   id: number;
   customer: string;
-  customerId: number;
-  amount: number;
   product: string;
-  date: string;
-  status: "Completed" | "Pending" | "Cancelled";
-}
+  amount: number;
+  status: string;
+  category: string;
+  createdAt: string;
+};
+
+const SALE_CATEGORIES = [
+  "Software",
+  "Hardware",
+  "Consulting",
+  "Subscription",
+  "Support",
+  "Training",
+];
 
 export function generateCustomers(count: number = 25): Customer[] {
   return Array.from({ length: count }, (_, i) => ({
@@ -69,11 +78,16 @@ export function generateSales(count: number = 30): Sale[] {
     return {
       id: i + 1,
       customer: customer.name,
-      customerId: customer.id,
-      amount: parseFloat(faker.commerce.price({ min: 100, max: 10000, dec: 2 })),
       product: faker.commerce.productName(),
-      date: faker.date.recent({ days: 60 }).toISOString().split('T')[0],
-      status: faker.helpers.arrayElement(['Completed', 'Pending', 'Cancelled']),
+      amount: parseFloat(
+        faker.commerce.price({ min: 100, max: 10000, dec: 2 })
+      ),
+      status: faker.helpers.arrayElement(["Completed", "Pending", "Cancelled"]),
+      category:
+        SALE_CATEGORIES[Math.floor(Math.random() * SALE_CATEGORIES.length)],
+      createdAt: new Date(Date.now() - Math.random() * 10000000000)
+        .toISOString()
+        .split("T")[0],
     };
   });
 }
@@ -149,19 +163,19 @@ export const fallbackSales: Sale[] = [
   {
     id: 1,
     customer: "John Smith",
-    customerId: 1,
-    amount: 2500.00,
     product: "Enterprise Software License",
-    date: "2024-05-20",
-    status: "Completed"
+    amount: 2500.0,
+    status: "Completed",
+    category: "Software",
+    createdAt: "2024-05-20",
   },
   {
     id: 2,
     customer: "Sarah Johnson",
-    customerId: 2,
-    amount: 1200.00,
     product: "Consulting Services",
-    date: "2024-05-18",
-    status: "Completed"
-  }
+    amount: 1200.0,
+    status: "Completed",
+    category: "Consulting",
+    createdAt: "2024-05-18",
+  },
 ];
