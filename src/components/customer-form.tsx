@@ -136,20 +136,22 @@ export function CustomerForm({ defaultValues, onSubmit, onCancel, readOnly }: Cu
           name="status"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Status</FormLabel>              <FormControl>              <Select
-                onValueChange={field.onChange}
-                disabled={readOnly}
-                value={field.value}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Inactive">Inactive</SelectItem>
-                  <SelectItem value="Pending">Pending</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormLabel>Status</FormLabel>
+              <FormControl>
+                <Select
+                  onValueChange={field.onChange}
+                  disabled={readOnly}
+                  value={field.value}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Inactive">Inactive</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                  </SelectContent>
+                </Select>
               </FormControl>
               <FormMessage />
             </FormItem>

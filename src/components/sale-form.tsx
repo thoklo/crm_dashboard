@@ -28,12 +28,21 @@ interface SaleFormProps {
   readOnly?: boolean;
 }
 
-export function SaleForm({ defaultValues, onSubmit, onCancel, readOnly }: SaleFormProps) {  const defaultFormValues = React.useMemo<SaleFormValues>(() => ({
-    customer: "",
-    product: "",
-    amount: 0,
-    status: defaultValues?.status || "Pending",
-  }), [defaultValues]);
+export function SaleForm({
+  defaultValues,
+  onSubmit,
+  onCancel,
+  readOnly,
+}: SaleFormProps) {
+  const defaultFormValues = React.useMemo<SaleFormValues>(
+    () => ({
+      customer: "",
+      product: "",
+      amount: 0,
+      status: defaultValues?.status || "Pending",
+    }),
+    [defaultValues]
+  );
 
   const form = useForm<SaleFormValues>({
     resolver: zodResolver(saleFormSchema),
@@ -70,7 +79,6 @@ export function SaleForm({ defaultValues, onSubmit, onCancel, readOnly }: SaleFo
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="product"
@@ -89,57 +97,64 @@ export function SaleForm({ defaultValues, onSubmit, onCancel, readOnly }: SaleFo
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="amount"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Amount</FormLabel>
-              <FormControl>                <Input
+              <FormControl>
+                <Input
                   type="text"
                   placeholder="$0.00"
                   {...field}
                   onChange={(e) => {
                     // Remove any non-digit characters except decimal point
-                    const value = e.target.value.replace(/[^\d.]/g, '');
+                    const value = e.target.value.replace(/[^\d.]/g, "");
                     field.onChange(Number(value));
                   }}
                   disabled={readOnly}
-                  value={field.value ? field.value.toLocaleString('en-US', {
-                    style: 'currency',
-                    currency: 'USD',
-                    minimumFractionDigits: 2
-                  }) : ""}
+                  value={
+                    field.value
+                      ? field.value.toLocaleString("en-US", {
+                          style: "currency",
+                          currency: "USD",
+                          minimumFractionDigits: 2,
+                        })
+                      : ""
+                  }
                 />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
-        />          <FormField
+        />
+        <FormField
           control={form.control}
           name="status"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Status</FormLabel>              <Select
-                onValueChange={field.onChange}
-                disabled={readOnly}
-                value={field.value}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Completed">Completed</SelectItem>
-                  <SelectItem value="Pending">Pending</SelectItem>
-                  <SelectItem value="Cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
+              <FormLabel>Status</FormLabel>
+              <FormControl>
+                <Select
+                  onValueChange={field.onChange}
+                  disabled={readOnly}
+                  value={field.value}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Completed">Completed</SelectItem>
+                    <SelectItem value="Pending">Pending</SelectItem>
+                    <SelectItem value="Cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-
         <DialogFooter className="gap-2 sm:gap-0">
           <Button type="button" variant="outline" onClick={onCancel}>
             {readOnly ? "Close" : "Cancel"}
