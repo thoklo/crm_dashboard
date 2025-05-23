@@ -65,17 +65,48 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   )
 }
 
-function TableHead({ className, ...props }: React.ComponentProps<"th">) {
+function TableHead<T>({
+  className,
+  sortable,
+  columnKey,
+  onSort,
+  sortDirection,
+  isSorted,
+  ...props
+}: React.ComponentProps<"th"> & {
+  sortable?: boolean;
+  columnKey?: T;
+  onSort?: (columnKey: T) => void;
+  sortDirection?: "asc" | "desc";
+  isSorted?: boolean;
+}) {
+  const handleClick = () => {
+    if (sortable && columnKey !== undefined && onSort) {
+      onSort(columnKey);
+    }
+  };
+
   return (
     <th
       data-slot="table-head"
       className={cn(
         "text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        sortable && "cursor-pointer hover:bg-muted/50",
         className
       )}
+      onClick={handleClick}
       {...props}
-    />
-  )
+    >
+      <div className="flex items-center">
+        {props.children}
+        {isSorted && (
+          <span className="ml-1">
+            {sortDirection === "asc" ? "▲" : "▼"}
+          </span>
+        )}
+      </div>
+    </th>
+  );
 }
 
 function TableCell({ className, ...props }: React.ComponentProps<"td">) {

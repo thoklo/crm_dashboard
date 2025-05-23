@@ -1,7 +1,7 @@
 // Customers page for CRM
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import {
   Table,
@@ -27,6 +27,8 @@ import {
 } from "@/lib/fakeData";
 import type { CustomerFormValues } from "@/lib/schemas";
 
+type SortKey = keyof Customer;
+
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,6 +37,8 @@ export default function CustomersPage() {
     null
   );
   const [dialogMode, setDialogMode] = useState<"add" | "edit" | "view">("add");
+  const [sortColumn, setSortColumn] = useState<SortKey>("company"); // Default sort by Company
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   useEffect(() => {
     try {
@@ -58,6 +62,44 @@ export default function CustomersPage() {
     setCustomers([...customers, newCustomer]);
     setDialogOpen(false);
   };
+
+  const handleSort = (columnKey: SortKey) => {
+    if (sortColumn === columnKey) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(columnKey);
+      setSortDirection("asc"); // Default to ascending when changing column
+    }
+  };
+
+  const sortedCustomers = useMemo(() => {
+    const sortableCustomers = [...customers];
+    if (!sortColumn) return sortableCustomers;
+
+    sortableCustomers.sort((a, b) => {
+      const aValue = a[sortColumn];
+      const bValue = b[sortColumn];
+
+      if (aValue === null || aValue === undefined) return sortDirection === "asc" ? 1 : -1;
+      if (bValue === null || bValue === undefined) return sortDirection === "asc" ? -1 : 1;
+
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        return sortDirection === "asc"
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      }
+
+      if (aValue < bValue) {
+        return sortDirection === "asc" ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortDirection === "asc" ? 1 : -1;
+      }
+      return 0;
+    });
+    return sortableCustomers;
+  }, [customers, sortColumn, sortDirection]);
+
 
   if (loading) {
     return (
@@ -146,17 +188,65 @@ export default function CustomersPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Company</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
+                <TableHead
+                  sortable
+                  columnKey="name"
+                  onSort={handleSort}
+                  sortDirection={sortColumn === "name" ? sortDirection : undefined}
+                  isSorted={sortColumn === "name"}
+                >
+                  Name
+                </TableHead>
+                <TableHead
+                  sortable
+                  columnKey="email"
+                  onSort={handleSort}
+                  sortDirection={sortColumn === "email" ? sortDirection : undefined}
+                  isSorted={sortColumn === "email"}
+                >
+                  Email
+                </TableHead>
+                <TableHead
+                  sortable
+                  columnKey="phone"
+                  onSort={handleSort}
+                  sortDirection={sortColumn === "phone" ? sortDirection : undefined}
+                  isSorted={sortColumn === "phone"}
+                >
+                  Phone
+                </TableHead>
+                <TableHead
+                  sortable
+                  columnKey="company"
+                  onSort={handleSort}
+                  sortDirection={sortColumn === "company" ? sortDirection : undefined}
+                  isSorted={sortColumn === "company"}
+                >
+                  Company
+                </TableHead>
+                <TableHead
+                  sortable
+                  columnKey="status"
+                  onSort={handleSort}
+                  sortDirection={sortColumn === "status" ? sortDirection : undefined}
+                  isSorted={sortColumn === "status"}
+                >
+                  Status
+                </TableHead>
+                <TableHead
+                  sortable
+                  columnKey="createdAt"
+                  onSort={handleSort}
+                  sortDirection={sortColumn === "createdAt" ? sortDirection : undefined}
+                  isSorted={sortColumn === "createdAt"}
+                >
+                  Created
+                </TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {customers.length === 0 ? (
+              {sortedCustomers.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={7}
@@ -166,7 +256,7 @@ export default function CustomersPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                customers.map((customer) => (
+                sortedCustomers.map((customer) => (
                   <TableRow key={customer.id}>
                     <TableCell className="font-medium">
                       {customer.name}

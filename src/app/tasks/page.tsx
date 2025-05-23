@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import {
   Table,
@@ -22,12 +22,16 @@ import { TaskForm } from "@/components/task-form";
 import { generateTasks, fallbackTasks, type Task } from "@/lib/fakeData";
 import type { TaskFormValues } from "@/lib/schemas";
 
+type SortKey = keyof Task;
+
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [dialogMode, setDialogMode] = useState<"add" | "edit" | "view">("add");
+  const [sortColumn, setSortColumn] = useState<SortKey>("dueDate"); // Default sort by Due Date
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc"); // Newest First
 
   useEffect(() => {
     try {
@@ -53,6 +57,53 @@ export default function TasksPage() {
     setDialogOpen(false);
   };
 
+  const handleSort = (columnKey: SortKey) => {
+    if (sortColumn === columnKey) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(columnKey);
+      setSortDirection("asc");
+    }
+  };
+
+  const sortedTasks = useMemo(() => {
+    const sortableTasks = [...tasks];
+    if (!sortColumn) return sortableTasks;
+
+    sortableTasks.sort((a, b) => {
+      const aValue = a[sortColumn];
+      const bValue = b[sortColumn];
+
+      if (aValue === null || aValue === undefined)
+        return sortDirection === "asc" ? 1 : -1;
+      if (bValue === null || bValue === undefined)
+        return sortDirection === "asc" ? -1 : 1;
+
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        return sortDirection === "asc"
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      }
+      // Handle date comparisons for string/number values that can be parsed as dates
+      const dateA = new Date(aValue);
+      const dateB = new Date(bValue);
+      if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
+        return sortDirection === "asc"
+          ? dateA.getTime() - dateB.getTime()
+          : dateB.getTime() - dateA.getTime();
+      }
+
+      if (aValue < bValue) {
+        return sortDirection === "asc" ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortDirection === "asc" ? 1 : -1;
+      }
+      return 0;
+    });
+    return sortableTasks;
+  }, [tasks, sortColumn, sortDirection]);
+
   if (loading) {
     return (
       <main className="p-6">
@@ -68,9 +119,7 @@ export default function TasksPage() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="text-3xl font-bold">Tasks</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage your team&apos;s tasks{" "}
-          </p>
+          <p className="text-muted-foreground mt-1">Manage your team tasks</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
@@ -150,17 +199,77 @@ export default function TasksPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Assigned To</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Due Date</TableHead>
+                <TableHead
+                  sortable
+                  columnKey="title"
+                  onSort={handleSort}
+                  sortDirection={
+                    sortColumn === "title" ? sortDirection : undefined
+                  }
+                  isSorted={sortColumn === "title"}
+                >
+                  Title
+                </TableHead>
+                <TableHead
+                  sortable
+                  columnKey="description"
+                  onSort={handleSort}
+                  sortDirection={
+                    sortColumn === "description" ? sortDirection : undefined
+                  }
+                  isSorted={sortColumn === "description"}
+                >
+                  Description
+                </TableHead>
+                <TableHead
+                  sortable
+                  columnKey="assignedTo"
+                  onSort={handleSort}
+                  sortDirection={
+                    sortColumn === "assignedTo" ? sortDirection : undefined
+                  }
+                  isSorted={sortColumn === "assignedTo"}
+                >
+                  Assigned To
+                </TableHead>
+                <TableHead
+                  sortable
+                  columnKey="status"
+                  onSort={handleSort}
+                  sortDirection={
+                    sortColumn === "status" ? sortDirection : undefined
+                  }
+                  isSorted={sortColumn === "status"}
+                >
+                  Status
+                </TableHead>
+                <TableHead
+                  sortable
+                  columnKey="priority"
+                  onSort={handleSort}
+                  sortDirection={
+                    sortColumn === "priority" ? sortDirection : undefined
+                  }
+                  isSorted={sortColumn === "priority"}
+                >
+                  Priority
+                </TableHead>
+                <TableHead
+                  sortable
+                  columnKey="dueDate"
+                  onSort={handleSort}
+                  sortDirection={
+                    sortColumn === "dueDate" ? sortDirection : undefined
+                  }
+                  isSorted={sortColumn === "dueDate"}
+                >
+                  Due Date
+                </TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tasks.length === 0 ? (
+              {sortedTasks.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={7}
@@ -170,7 +279,7 @@ export default function TasksPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                tasks.map((task) => (
+                sortedTasks.map((task) => (
                   <TableRow key={task.id}>
                     <TableCell className="font-medium">{task.title}</TableCell>
                     <TableCell className="max-w-xs truncate">
