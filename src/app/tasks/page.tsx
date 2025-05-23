@@ -74,7 +74,16 @@ export default function TasksPage() {
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button>Add Task</Button>
+            <Button
+              onClick={() => {
+                setSelectedTask(null);
+                setDialogMode("add");
+                setDialogOpen(true);
+              }}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg transition-colors duration-200 px-6 py-2 rounded-md border-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
+            >
+              Add Task
+            </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>

@@ -55,6 +55,8 @@ export function SaleForm({
         ...defaultFormValues,
         ...defaultValues,
       });
+    } else {
+      form.reset(defaultFormValues);
     }
   }, [defaultValues, form, defaultFormValues]);
 
@@ -160,7 +162,10 @@ export function SaleForm({
             {readOnly ? "Close" : "Cancel"}
           </Button>
           {!readOnly && (
-            <Button type="submit">
+            <Button
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg transition-colors duration-200 px-6 py-2 rounded-md border-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
+            >
               {defaultValues ? "Update Sale" : "Log Sale"}
             </Button>
           )}

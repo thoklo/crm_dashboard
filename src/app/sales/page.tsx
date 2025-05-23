@@ -74,7 +74,16 @@ export default function SalesPage() {
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button>Log Sale</Button>
+            <Button
+              onClick={() => {
+                setSelectedSale(null);
+                setDialogMode("add");
+                setDialogOpen(true);
+              }}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg transition-colors duration-200 px-6 py-2 rounded-md border-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
+            >
+              Log Sale
+            </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -87,16 +96,22 @@ export default function SalesPage() {
               </DialogTitle>
             </DialogHeader>
             <SaleForm
-              defaultValues={selectedSale ? {
-                customer: selectedSale.customer,
-                product: selectedSale.product,
-                amount: selectedSale.amount,
-                status: selectedSale.status
-              } : undefined}
+              defaultValues={
+                selectedSale
+                  ? {
+                      customer: selectedSale.customer,
+                      product: selectedSale.product,
+                      amount: selectedSale.amount,
+                      status: selectedSale.status,
+                    }
+                  : undefined
+              }
               onSubmit={(data) => {
                 if (dialogMode === "edit" && selectedSale) {
                   const updatedSales = sales.map((s) =>
-                    s.id === selectedSale.id ? { ...s, ...data, status: data.status } : s
+                    s.id === selectedSale.id
+                      ? { ...s, ...data, status: data.status }
+                      : s
                   );
                   setSales(updatedSales);
                 } else {
@@ -154,7 +169,8 @@ export default function SalesPage() {
                     </TableCell>
                     <TableCell>{sale.product}</TableCell>
                     <TableCell>
-                      ${sale.amount.toLocaleString("en-US", {
+                      $
+                      {sale.amount.toLocaleString("en-US", {
                         minimumFractionDigits: 2,
                       })}
                     </TableCell>

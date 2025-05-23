@@ -62,9 +62,9 @@ export function TaskForm({ defaultValues, onSubmit, onCancel, readOnly }: TaskFo
             <FormItem>
               <FormLabel>Title</FormLabel>
               <FormControl>
-                <Input 
-                  placeholder="Task title" 
-                  {...field} 
+                <Input
+                  placeholder="Task title"
+                  {...field}
                   disabled={readOnly}
                   value={field.value || ""}
                 />
@@ -81,9 +81,9 @@ export function TaskForm({ defaultValues, onSubmit, onCancel, readOnly }: TaskFo
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Input 
-                  placeholder="Task description" 
-                  {...field} 
+                <Input
+                  placeholder="Task description"
+                  {...field}
                   disabled={readOnly}
                   value={field.value || ""}
                 />
@@ -100,9 +100,9 @@ export function TaskForm({ defaultValues, onSubmit, onCancel, readOnly }: TaskFo
             <FormItem>
               <FormLabel>Assigned To</FormLabel>
               <FormControl>
-                <Input 
-                  placeholder="Team member name" 
-                  {...field} 
+                <Input
+                  placeholder="Team member name"
+                  {...field}
                   disabled={readOnly}
                   value={field.value || ""}
                 />
@@ -123,7 +123,7 @@ export function TaskForm({ defaultValues, onSubmit, onCancel, readOnly }: TaskFo
                 disabled={readOnly}
                 value={field.value}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-48">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -150,7 +150,7 @@ export function TaskForm({ defaultValues, onSubmit, onCancel, readOnly }: TaskFo
                 disabled={readOnly}
                 value={field.value}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-48">
                   <SelectValue placeholder="Select priority" />
                 </SelectTrigger>
                 <SelectContent>
@@ -173,9 +173,10 @@ export function TaskForm({ defaultValues, onSubmit, onCancel, readOnly }: TaskFo
             <FormItem>
               <FormLabel>Due Date</FormLabel>
               <FormControl>
-                <Input 
-                  type="date" 
-                  {...field} 
+                <Input
+                  type="date"
+                  className="w-48"
+                  {...field}
                   disabled={readOnly}
                   value={field.value || ""}
                 />
@@ -187,10 +188,13 @@ export function TaskForm({ defaultValues, onSubmit, onCancel, readOnly }: TaskFo
 
         <DialogFooter className="gap-2 sm:gap-0">
           <Button type="button" variant="outline" onClick={onCancel}>
-            {readOnly ? 'Close' : 'Cancel'}
+            {readOnly ? "Close" : "Cancel"}
           </Button>
           {!readOnly && (
-            <Button type="submit">
+            <Button
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg transition-colors duration-200 px-6 py-2 rounded-md border-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
+            >
               {defaultValues ? "Update Task" : "Add Task"}
             </Button>
           )}
