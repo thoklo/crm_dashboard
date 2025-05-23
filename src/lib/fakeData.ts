@@ -9,7 +9,7 @@ export interface Customer {
   email: string;
   phone: string;
   company: string;
-  status: string;
+  status: "Active" | "Inactive" | "Pending";
   avatar?: string;
   createdAt: string;
 }
@@ -19,8 +19,8 @@ export interface Task {
   title: string;
   description: string;
   assignedTo: string;
-  status: string;
-  priority: string;
+  status: "To Do" | "In Progress" | "Completed" | "Blocked";
+  priority: "Low" | "Medium" | "High" | "Critical";
   dueDate: string;
   createdAt: string;
 }
@@ -32,7 +32,7 @@ export interface Sale {
   amount: number;
   product: string;
   date: string;
-  status: string;
+  status: "Completed" | "Pending" | "Cancelled";
 }
 
 export function generateCustomers(count: number = 25): Customer[] {
