@@ -21,8 +21,35 @@ import {
 import { TaskForm } from "@/components/task-form";
 import { generateTasks, fallbackTasks, type Task } from "@/lib/fakeData";
 import type { TaskFormValues } from "@/lib/schemas";
+import { FilterPopover } from "@/components/ui/filter-popover";
 
 type SortKey = keyof Task;
+type Filters = {
+  [key in SortKey]?: string[];
+};
+
+const statusOptions = [
+  { label: "Not Started", value: "Not Started" },
+  { label: "In Progress", value: "In Progress" },
+  { label: "Completed", value: "Completed" },
+  { label: "Blocked", value: "Blocked" },
+];
+
+const priorityOptions = [
+  { label: "Critical", value: "Critical" },
+  { label: "High", value: "High" },
+  { label: "Medium", value: "Medium" },
+  { label: "Low", value: "Low" },
+];
+
+const dueDateOptions = [
+  { label: "Today", value: "today" },
+  { label: "Tomorrow", value: "tomorrow" },
+  { label: "This Week", value: "thisWeek" },
+  { label: "Next Week", value: "nextWeek" },
+  { label: "This Month", value: "thisMonth" },
+  { label: "Overdue", value: "overdue" },
+];
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -30,8 +57,9 @@ export default function TasksPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [dialogMode, setDialogMode] = useState<"add" | "edit" | "view">("add");
-  const [sortColumn, setSortColumn] = useState<SortKey>("dueDate"); // Default sort by Due Date
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc"); // Newest First
+  const [sortColumn, setSortColumn] = useState<SortKey>("dueDate");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [filters, setFilters] = useState<Filters>({});
 
   useEffect(() => {
     try {
@@ -66,43 +94,103 @@ export default function TasksPage() {
     }
   };
 
-  const sortedTasks = useMemo(() => {
-    const sortableTasks = [...tasks];
-    if (!sortColumn) return sortableTasks;
+  const handleFilterChange = (column: SortKey, selectedOptions: string[]) => {
+    setFilters((prev) => ({
+      ...prev,
+      [column]: selectedOptions.length > 0 ? selectedOptions : undefined,
+    }));
+  };
 
-    sortableTasks.sort((a, b) => {
-      const aValue = a[sortColumn];
-      const bValue = b[sortColumn];
+  const filteredAndSortedTasks = useMemo(() => {
+    let filteredTasks = [...tasks];
 
-      if (aValue === null || aValue === undefined)
-        return sortDirection === "asc" ? 1 : -1;
-      if (bValue === null || bValue === undefined)
-        return sortDirection === "asc" ? -1 : 1;
+    // Apply filters
+    Object.entries(filters).forEach(([column, selectedOptions]) => {
+      if (!selectedOptions?.length) return;
 
-      if (typeof aValue === "string" && typeof bValue === "string") {
-        return sortDirection === "asc"
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      }
-      // Handle date comparisons for string/number values that can be parsed as dates
-      const dateA = new Date(aValue);
-      const dateB = new Date(bValue);
-      if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
-        return sortDirection === "asc"
-          ? dateA.getTime() - dateB.getTime()
-          : dateB.getTime() - dateA.getTime();
-      }
+      filteredTasks = filteredTasks.filter((task) => {
+        const value = task[column as SortKey];
 
-      if (aValue < bValue) {
-        return sortDirection === "asc" ? -1 : 1;
-      }
-      if (aValue > bValue) {
-        return sortDirection === "asc" ? 1 : -1;
-      }
-      return 0;
+        if (column === "dueDate") {
+          const dueDate = new Date(value as string);
+          const now = new Date();
+          const today = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate()
+          );
+          const tomorrow = new Date(today);
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          const nextWeek = new Date(today);
+          nextWeek.setDate(nextWeek.getDate() + 7);
+          const thisMonth = new Date(today);
+          thisMonth.setMonth(thisMonth.getMonth() + 1);
+
+          return selectedOptions.some((option) => {
+            switch (option) {
+              case "today":
+                return dueDate.toDateString() === today.toDateString();
+              case "tomorrow":
+                return dueDate.toDateString() === tomorrow.toDateString();
+              case "thisWeek":
+                return dueDate >= today && dueDate < nextWeek;
+              case "nextWeek":
+                return (
+                  dueDate >= nextWeek &&
+                  dueDate <
+                    new Date(nextWeek.getTime() + 7 * 24 * 60 * 60 * 1000)
+                );
+              case "thisMonth":
+                return dueDate >= today && dueDate < thisMonth;
+              case "overdue":
+                return dueDate < today;
+              default:
+                return true;
+            }
+          });
+        }
+
+        return selectedOptions.includes(String(value));
+      });
     });
-    return sortableTasks;
-  }, [tasks, sortColumn, sortDirection]);
+
+    // Apply sorting
+    if (sortColumn) {
+      filteredTasks.sort((a, b) => {
+        const aValue = a[sortColumn];
+        const bValue = b[sortColumn];
+
+        if (aValue === null || aValue === undefined)
+          return sortDirection === "asc" ? 1 : -1;
+        if (bValue === null || bValue === undefined)
+          return sortDirection === "asc" ? -1 : 1;
+
+        if (typeof aValue === "string" && typeof bValue === "string") {
+          return sortDirection === "asc"
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
+        }
+
+        const dateA = new Date(aValue);
+        const dateB = new Date(bValue);
+        if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
+          return sortDirection === "asc"
+            ? dateA.getTime() - dateB.getTime()
+            : dateB.getTime() - dateA.getTime();
+        }
+
+        return sortDirection === "asc"
+          ? aValue < bValue
+            ? -1
+            : 1
+          : bValue < aValue
+          ? -1
+          : 1;
+      });
+    }
+
+    return filteredTasks;
+  }, [tasks, filters, sortColumn, sortDirection]);
 
   if (loading) {
     return (
@@ -230,7 +318,24 @@ export default function TasksPage() {
                   }
                   isSorted={sortColumn === "assignedTo"}
                 >
-                  Assigned To
+                  <div className="flex items-center">
+                    Assigned To
+                    <FilterPopover
+                      options={tasks
+                        .map((t) => ({
+                          label: t.assignedTo,
+                          value: t.assignedTo,
+                        }))
+                        .filter(
+                          (v, i, a) =>
+                            a.findIndex((t) => t.value === v.value) === i
+                        )}
+                      onFilterChange={(options) =>
+                        handleFilterChange("assignedTo", options)
+                      }
+                      title="Filter by Assignee"
+                    />
+                  </div>
                 </TableHead>
                 <TableHead
                   sortable
@@ -241,7 +346,16 @@ export default function TasksPage() {
                   }
                   isSorted={sortColumn === "status"}
                 >
-                  Status
+                  <div className="flex items-center">
+                    Status
+                    <FilterPopover
+                      options={statusOptions}
+                      onFilterChange={(options) =>
+                        handleFilterChange("status", options)
+                      }
+                      title="Filter by Status"
+                    />
+                  </div>
                 </TableHead>
                 <TableHead
                   sortable
@@ -252,7 +366,16 @@ export default function TasksPage() {
                   }
                   isSorted={sortColumn === "priority"}
                 >
-                  Priority
+                  <div className="flex items-center">
+                    Priority
+                    <FilterPopover
+                      options={priorityOptions}
+                      onFilterChange={(options) =>
+                        handleFilterChange("priority", options)
+                      }
+                      title="Filter by Priority"
+                    />
+                  </div>
                 </TableHead>
                 <TableHead
                   sortable
@@ -263,13 +386,22 @@ export default function TasksPage() {
                   }
                   isSorted={sortColumn === "dueDate"}
                 >
-                  Due Date
+                  <div className="flex items-center">
+                    Due Date
+                    <FilterPopover
+                      options={dueDateOptions}
+                      onFilterChange={(options) =>
+                        handleFilterChange("dueDate", options)
+                      }
+                      title="Filter by Due Date"
+                    />
+                  </div>
                 </TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedTasks.length === 0 ? (
+              {filteredAndSortedTasks.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={7}
@@ -279,7 +411,7 @@ export default function TasksPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                sortedTasks.map((task) => (
+                filteredAndSortedTasks.map((task) => (
                   <TableRow key={task.id}>
                     <TableCell className="font-medium">{task.title}</TableCell>
                     <TableCell className="max-w-xs truncate">

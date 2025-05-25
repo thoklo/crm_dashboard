@@ -21,8 +21,43 @@ import {
 import { SaleForm } from "@/components/sale-form";
 import { generateSales, fallbackSales, type Sale } from "@/lib/fakeData";
 import type { SaleFormValues } from "@/lib/schemas";
+import { FilterPopover } from "@/components/ui/filter-popover";
 
 type SortKey = keyof Sale;
+type Filters = {
+  [key in SortKey]?: string[];
+};
+
+// Define filter options
+const amountRanges = [
+  { label: "< $1,000", value: "0-1000" },
+  { label: "$1,001 - $3,000", value: "1001-3000" },
+  { label: "$3,001 - $5,000", value: "3001-5000" },
+  { label: "$5,001 - $10,000", value: "5001-10000" },
+  { label: "> $10,000", value: "10001+" },
+];
+
+const statusOptions = [
+  { label: "Completed", value: "Completed" },
+  { label: "Pending", value: "Pending" },
+  { label: "Cancelled", value: "Cancelled" },
+];
+
+const categoryOptions = [
+  { label: "Software", value: "Software" },
+  { label: "Hardware", value: "Hardware" },
+  { label: "Consulting", value: "Consulting" },
+  { label: "Support", value: "Support" },
+  { label: "Training", value: "Training" },
+];
+
+const dateOptions = [
+  { label: "Last 7 days", value: "7days" },
+  { label: "Last 30 days", value: "30days" },
+  { label: "Last 90 days", value: "90days" },
+  { label: "This year", value: "thisYear" },
+  { label: "Last year", value: "lastYear" },
+];
 
 export default function SalesPage() {
   const [sales, setSales] = useState<Sale[]>([]);
@@ -30,8 +65,9 @@ export default function SalesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [dialogMode, setDialogMode] = useState<"add" | "edit" | "view">("add");
-  const [sortColumn, setSortColumn] = useState<SortKey>("date"); // Default sort by date
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc"); // Default newest first
+  const [sortColumn, setSortColumn] = useState<SortKey>("date");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [filters, setFilters] = useState<Filters>({});
 
   useEffect(() => {
     try {
@@ -45,42 +81,92 @@ export default function SalesPage() {
     }
   }, []);
 
-  const sortedSales = useMemo(() => {
-    const sortableRecords = [...sales];
-    if (!sortColumn) return sortableRecords;
+  const handleFilterChange = (column: SortKey, selectedOptions: string[]) => {
+    setFilters((prev) => ({
+      ...prev,
+      [column]: selectedOptions.length > 0 ? selectedOptions : undefined,
+    }));
+  };
 
-    return sortableRecords.sort((a, b) => {
-      const aValue = a[sortColumn];
-      const bValue = b[sortColumn];
+  const filteredAndSortedSales = useMemo(() => {
+    let filteredSales = [...sales];
 
-      if (aValue === null || aValue === undefined)
-        return sortDirection === "asc" ? 1 : -1;
-      if (bValue === null || bValue === undefined)
-        return sortDirection === "asc" ? -1 : 1;
+    // Apply filters
+    Object.entries(filters).forEach(([column, selectedOptions]) => {
+      if (!selectedOptions?.length) return;
 
-      // Handle different types appropriately
-      if (sortColumn === "amount") {
-        // Numeric comparison for amount
-        return sortDirection === "asc"
-          ? Number(aValue) - Number(bValue)
-          : Number(bValue) - Number(aValue);
-      } else if (sortColumn === "date") {
-        // Date comparison
-        const aDate = new Date(aValue as Date);
-        const bDate = new Date(bValue as Date);
-        return sortDirection === "asc"
-          ? aDate.getTime() - bDate.getTime()
-          : bDate.getTime() - aDate.getTime();
-      } else {
-        // String comparison for other fields
+      filteredSales = filteredSales.filter((sale) => {
+        const value = sale[column as SortKey];
+
+        if (column === "amount") {
+          const amount = Number(value);
+          return selectedOptions.some((option) => {
+            const [min, max] = option.split("-").map(Number);
+            if (option === "10001+") return amount > 10000;
+            return amount >= min && amount <= max;
+          });
+        }
+
+        if (column === "date") {
+          const date = new Date(value as string | number | Date);
+          const now = new Date();
+          return selectedOptions.some((option) => {
+            switch (option) {
+              case "7days":
+                return date >= new Date(now.setDate(now.getDate() - 7));
+              case "30days":
+                return date >= new Date(now.setDate(now.getDate() - 30));
+              case "90days":
+                return date >= new Date(now.setDate(now.getDate() - 90));
+              case "thisYear":
+                return date.getFullYear() === now.getFullYear();
+              case "lastYear":
+                return date.getFullYear() === now.getFullYear() - 1;
+              default:
+                return true;
+            }
+          });
+        }
+
+        return selectedOptions.includes(String(value));
+      });
+    });
+
+    // Apply sorting
+    if (sortColumn) {
+      filteredSales.sort((a, b) => {
+        const aValue = a[sortColumn];
+        const bValue = b[sortColumn];
+
+        if (aValue === null || aValue === undefined)
+          return sortDirection === "asc" ? 1 : -1;
+        if (bValue === null || bValue === undefined)
+          return sortDirection === "asc" ? -1 : 1;
+
+        if (sortColumn === "amount") {
+          return sortDirection === "asc"
+            ? Number(aValue) - Number(bValue)
+            : Number(bValue) - Number(aValue);
+        }
+
+        if (sortColumn === "date") {
+          const aDate = new Date(aValue as Date);
+          const bDate = new Date(bValue as Date);
+          return sortDirection === "asc"
+            ? aDate.getTime() - bDate.getTime()
+            : bDate.getTime() - aDate.getTime();
+        }
+
         const aStr = String(aValue).toLowerCase();
         const bStr = String(bValue).toLowerCase();
         return sortDirection === "asc"
           ? aStr.localeCompare(bStr)
           : bStr.localeCompare(aStr);
-      }
-    });
-  }, [sales, sortColumn, sortDirection]);
+      });
+    }
+
+    return filteredSales;
+  }, [sales, filters, sortColumn, sortDirection]);
 
   const handleAddSale = (data: SaleFormValues) => {
     const newSale: Sale = {
@@ -205,7 +291,7 @@ export default function SalesPage() {
                   }
                   isSorted={sortColumn === "customer"}
                 >
-                  Customer
+                  <div className="flex items-center">Customer</div>
                 </TableHead>
                 <TableHead
                   sortable
@@ -216,7 +302,7 @@ export default function SalesPage() {
                   }
                   isSorted={sortColumn === "product"}
                 >
-                  Product
+                  <div className="flex items-center">Product</div>
                 </TableHead>
                 <TableHead
                   sortable
@@ -227,7 +313,16 @@ export default function SalesPage() {
                   }
                   isSorted={sortColumn === "category"}
                 >
-                  Category
+                  <div className="flex items-center">
+                    Category
+                    <FilterPopover
+                      options={categoryOptions}
+                      onFilterChange={(options) =>
+                        handleFilterChange("category", options)
+                      }
+                      title="Filter by Category"
+                    />
+                  </div>
                 </TableHead>
                 <TableHead
                   sortable
@@ -238,7 +333,16 @@ export default function SalesPage() {
                   }
                   isSorted={sortColumn === "amount"}
                 >
-                  Amount
+                  <div className="flex items-center">
+                    Amount
+                    <FilterPopover
+                      options={amountRanges}
+                      onFilterChange={(options) =>
+                        handleFilterChange("amount", options)
+                      }
+                      title="Filter by Amount"
+                    />
+                  </div>
                 </TableHead>
                 <TableHead
                   sortable
@@ -249,7 +353,16 @@ export default function SalesPage() {
                   }
                   isSorted={sortColumn === "date"}
                 >
-                  Date
+                  <div className="flex items-center">
+                    Date
+                    <FilterPopover
+                      options={dateOptions}
+                      onFilterChange={(options) =>
+                        handleFilterChange("date", options)
+                      }
+                      title="Filter by Date"
+                    />
+                  </div>
                 </TableHead>
                 <TableHead
                   sortable
@@ -260,13 +373,22 @@ export default function SalesPage() {
                   }
                   isSorted={sortColumn === "status"}
                 >
-                  Status
+                  <div className="flex items-center">
+                    Status
+                    <FilterPopover
+                      options={statusOptions}
+                      onFilterChange={(options) =>
+                        handleFilterChange("status", options)
+                      }
+                      title="Filter by Status"
+                    />
+                  </div>
                 </TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedSales.length === 0 ? (
+              {filteredAndSortedSales.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={7}
@@ -276,7 +398,7 @@ export default function SalesPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                sortedSales.map((sale) => (
+                filteredAndSortedSales.map((sale) => (
                   <TableRow key={sale.id}>
                     <TableCell className="font-medium">
                       {sale.customer}

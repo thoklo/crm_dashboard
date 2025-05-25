@@ -26,8 +26,26 @@ import {
   type Customer,
 } from "@/lib/fakeData";
 import type { CustomerFormValues } from "@/lib/schemas";
+import { FilterPopover } from "@/components/ui/filter-popover";
 
 type SortKey = keyof Customer;
+type Filters = {
+  [key in SortKey]?: string[];
+};
+
+const statusOptions = [
+  { label: "Active", value: "Active" },
+  { label: "Inactive", value: "Inactive" },
+  { label: "Pending", value: "Pending" },
+];
+
+const createdAtRanges = [
+  { label: "Last 7 days", value: "7days" },
+  { label: "Last 30 days", value: "30days" },
+  { label: "Last 90 days", value: "90days" },
+  { label: "This year", value: "thisYear" },
+  { label: "Last year", value: "lastYear" },
+];
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -39,6 +57,7 @@ export default function CustomersPage() {
   const [dialogMode, setDialogMode] = useState<"add" | "edit" | "view">("add");
   const [sortColumn, setSortColumn] = useState<SortKey>("company"); // Default sort by Company
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [filters, setFilters] = useState<Filters>({});
 
   useEffect(() => {
     try {
@@ -72,34 +91,69 @@ export default function CustomersPage() {
     }
   };
 
-  const sortedCustomers = useMemo(() => {
-    const sortableCustomers = [...customers];
-    if (!sortColumn) return sortableCustomers;
+  const handleFilterChange = (column: SortKey, selectedOptions: string[]) => {
+    setFilters((prev) => ({
+      ...prev,
+      [column]: selectedOptions.length > 0 ? selectedOptions : undefined,
+    }));
+  };
 
-    sortableCustomers.sort((a, b) => {
-      const aValue = a[sortColumn];
-      const bValue = b[sortColumn];
+  const filteredAndSortedCustomers = useMemo(() => {
+    let filteredCustomers = [...customers];
 
-      if (aValue === null || aValue === undefined) return sortDirection === "asc" ? 1 : -1;
-      if (bValue === null || bValue === undefined) return sortDirection === "asc" ? -1 : 1;
+    // Apply filters
+    Object.entries(filters).forEach(([column, selectedOptions]) => {
+      if (!selectedOptions?.length) return;
 
-      if (typeof aValue === "string" && typeof bValue === "string") {
-        return sortDirection === "asc"
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      }
+      filteredCustomers = filteredCustomers.filter((customer) => {
+        const value = customer[column as SortKey];
 
-      if (aValue < bValue) {
-        return sortDirection === "asc" ? -1 : 1;
-      }
-      if (aValue > bValue) {
-        return sortDirection === "asc" ? 1 : -1;
-      }
-      return 0;
+        if (column === "createdAt") {
+          const createdDate = new Date(value as string);
+          const now = new Date();
+          return selectedOptions.some((option) => {
+            switch (option) {
+              case "7days":
+                return createdDate >= new Date(now.setDate(now.getDate() - 7));
+              case "30days":
+                return createdDate >= new Date(now.setDate(now.getDate() - 30));
+              case "90days":
+                return createdDate >= new Date(now.setDate(now.getDate() - 90));
+              case "thisYear":
+                return createdDate.getFullYear() === now.getFullYear();
+              case "lastYear":
+                return createdDate.getFullYear() === now.getFullYear() - 1;
+              default:
+                return true;
+            }
+          });
+        }
+
+        return selectedOptions.includes(String(value));
+      });
     });
-    return sortableCustomers;
-  }, [customers, sortColumn, sortDirection]);
 
+    // Apply sorting
+    if (sortColumn) {
+      filteredCustomers.sort((a, b) => {
+        const aValue = a[sortColumn];
+        const bValue = b[sortColumn];
+
+        if (aValue === null || aValue === undefined)
+          return sortDirection === "asc" ? 1 : -1;
+        if (bValue === null || bValue === undefined)
+          return sortDirection === "asc" ? -1 : 1;
+
+        const aStr = String(aValue).toLowerCase();
+        const bStr = String(bValue).toLowerCase();
+        return sortDirection === "asc"
+          ? aStr.localeCompare(bStr)
+          : bStr.localeCompare(aStr);
+      });
+    }
+
+    return filteredCustomers;
+  }, [customers, filters, sortColumn, sortDirection]);
 
   if (loading) {
     return (
@@ -192,7 +246,9 @@ export default function CustomersPage() {
                   sortable
                   columnKey="name"
                   onSort={handleSort}
-                  sortDirection={sortColumn === "name" ? sortDirection : undefined}
+                  sortDirection={
+                    sortColumn === "name" ? sortDirection : undefined
+                  }
                   isSorted={sortColumn === "name"}
                 >
                   Name
@@ -201,7 +257,9 @@ export default function CustomersPage() {
                   sortable
                   columnKey="email"
                   onSort={handleSort}
-                  sortDirection={sortColumn === "email" ? sortDirection : undefined}
+                  sortDirection={
+                    sortColumn === "email" ? sortDirection : undefined
+                  }
                   isSorted={sortColumn === "email"}
                 >
                   Email
@@ -210,7 +268,9 @@ export default function CustomersPage() {
                   sortable
                   columnKey="phone"
                   onSort={handleSort}
-                  sortDirection={sortColumn === "phone" ? sortDirection : undefined}
+                  sortDirection={
+                    sortColumn === "phone" ? sortDirection : undefined
+                  }
                   isSorted={sortColumn === "phone"}
                 >
                   Phone
@@ -219,34 +279,73 @@ export default function CustomersPage() {
                   sortable
                   columnKey="company"
                   onSort={handleSort}
-                  sortDirection={sortColumn === "company" ? sortDirection : undefined}
+                  sortDirection={
+                    sortColumn === "company" ? sortDirection : undefined
+                  }
                   isSorted={sortColumn === "company"}
                 >
-                  Company
+                  <div className="flex items-center">
+                    Company
+                    <FilterPopover
+                      options={customers
+                        .map((c) => ({ label: c.company, value: c.company }))
+                        .filter(
+                          (v, i, a) =>
+                            a.findIndex((t) => t.value === v.value) === i
+                        )
+                        .sort((a, b) => a.label.localeCompare(b.label))}
+                      onFilterChange={(options) =>
+                        handleFilterChange("company", options)
+                      }
+                      title="Filter by Company"
+                    />
+                  </div>
                 </TableHead>
                 <TableHead
                   sortable
                   columnKey="status"
                   onSort={handleSort}
-                  sortDirection={sortColumn === "status" ? sortDirection : undefined}
+                  sortDirection={
+                    sortColumn === "status" ? sortDirection : undefined
+                  }
                   isSorted={sortColumn === "status"}
                 >
-                  Status
+                  <div className="flex items-center">
+                    Status
+                    <FilterPopover
+                      options={statusOptions}
+                      onFilterChange={(options) =>
+                        handleFilterChange("status", options)
+                      }
+                      title="Filter by Status"
+                    />
+                  </div>
                 </TableHead>
                 <TableHead
                   sortable
                   columnKey="createdAt"
                   onSort={handleSort}
-                  sortDirection={sortColumn === "createdAt" ? sortDirection : undefined}
+                  sortDirection={
+                    sortColumn === "createdAt" ? sortDirection : undefined
+                  }
                   isSorted={sortColumn === "createdAt"}
                 >
-                  Created
+                  <div className="flex items-center">
+                    Created
+                    <FilterPopover
+                      options={createdAtRanges}
+                      onFilterChange={(options) =>
+                        handleFilterChange("createdAt", options)
+                      }
+                      title="Filter by Creation Date"
+                    />
+                  </div>
                 </TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedCustomers.length === 0 ? (
+              {filteredAndSortedCustomers.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={7}
@@ -256,7 +355,7 @@ export default function CustomersPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                sortedCustomers.map((customer) => (
+                filteredAndSortedCustomers.map((customer) => (
                   <TableRow key={customer.id}>
                     <TableCell className="font-medium">
                       {customer.name}

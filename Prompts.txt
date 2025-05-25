@@ -1,0 +1,19 @@
+On all action buttons such as Add Customer, Add Task and Log Sales, it does not open a form with placeholding information to fill in, but instead the form View or Edit dependent on what I had opened prior.
+
+In Tasks, align the width of Due Date field and Priority field with the Status field.
+
+Add some modern design to the action buttons to make it more intutive that is a key button: Add Customer, Add Task, Log Sale
+
+Add Category on Sales and add Fake data to them
+
+Drop downs on an entry form has transparent background such as Status, Priority, Category 
+
+Add Date for Sales so in entry, edit, view and in the column 
+
+Add Sorting of each column. Defaults: Customers - Company, Tasks - Due Date / Newest First, Sales - Dates.
+
+Using the existing sorting mechanism, add sorting of the columns on the pages: On Customers - Status and Created, on Tasks - Status, Priority and Assigned To, on Log Sales - Customer, Product, Category, Amount, Date and Status
+
+Add a search bar below the action buttons Add Customer/Create Task and Log Sales where you can search for any data in the table.
+Add Filters in the columns that uses sorting. For instance on Sales: Amount levels <$1.000, $1.001 - $3.000, $3.001-$5.000 etc. Date filter on Year and/or Month. Status on the different status. Categories. Assigned To.
+In the dropdown list of filters, add a tick mark toggle to choose one or multiple filters within each Column
