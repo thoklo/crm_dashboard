@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import {
   Table,
@@ -22,12 +22,16 @@ import { SaleForm } from "@/components/sale-form";
 import { generateSales, fallbackSales, type Sale } from "@/lib/fakeData";
 import type { SaleFormValues } from "@/lib/schemas";
 
+type SortKey = keyof Sale;
+
 export default function SalesPage() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [dialogMode, setDialogMode] = useState<"add" | "edit" | "view">("add");
+  const [sortColumn, setSortColumn] = useState<SortKey>("date"); // Default sort by date
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc"); // Default newest first
 
   useEffect(() => {
     try {
@@ -41,6 +45,43 @@ export default function SalesPage() {
     }
   }, []);
 
+  const sortedSales = useMemo(() => {
+    const sortableRecords = [...sales];
+    if (!sortColumn) return sortableRecords;
+
+    return sortableRecords.sort((a, b) => {
+      const aValue = a[sortColumn];
+      const bValue = b[sortColumn];
+
+      if (aValue === null || aValue === undefined)
+        return sortDirection === "asc" ? 1 : -1;
+      if (bValue === null || bValue === undefined)
+        return sortDirection === "asc" ? -1 : 1;
+
+      // Handle different types appropriately
+      if (sortColumn === "amount") {
+        // Numeric comparison for amount
+        return sortDirection === "asc"
+          ? Number(aValue) - Number(bValue)
+          : Number(bValue) - Number(aValue);
+      } else if (sortColumn === "date") {
+        // Date comparison
+        const aDate = new Date(aValue as Date);
+        const bDate = new Date(bValue as Date);
+        return sortDirection === "asc"
+          ? aDate.getTime() - bDate.getTime()
+          : bDate.getTime() - aDate.getTime();
+      } else {
+        // String comparison for other fields
+        const aStr = String(aValue).toLowerCase();
+        const bStr = String(bValue).toLowerCase();
+        return sortDirection === "asc"
+          ? aStr.localeCompare(bStr)
+          : bStr.localeCompare(aStr);
+      }
+    });
+  }, [sales, sortColumn, sortDirection]);
+
   const handleAddSale = (data: SaleFormValues) => {
     const newSale: Sale = {
       id: sales.length + 1,
@@ -51,6 +92,13 @@ export default function SalesPage() {
 
     setSales([...sales, newSale]);
     setDialogOpen(false);
+  };
+
+  const handleSort = (column: SortKey) => {
+    setSortDirection((currentDirection) =>
+      sortColumn === column && currentDirection === "asc" ? "desc" : "asc"
+    );
+    setSortColumn(column);
   };
 
   if (loading) {
@@ -148,17 +196,77 @@ export default function SalesPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Customer</TableHead>
-                <TableHead>Product</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead
+                  sortable
+                  columnKey="customer"
+                  onSort={handleSort}
+                  sortDirection={
+                    sortColumn === "customer" ? sortDirection : undefined
+                  }
+                  isSorted={sortColumn === "customer"}
+                >
+                  Customer
+                </TableHead>
+                <TableHead
+                  sortable
+                  columnKey="product"
+                  onSort={handleSort}
+                  sortDirection={
+                    sortColumn === "product" ? sortDirection : undefined
+                  }
+                  isSorted={sortColumn === "product"}
+                >
+                  Product
+                </TableHead>
+                <TableHead
+                  sortable
+                  columnKey="category"
+                  onSort={handleSort}
+                  sortDirection={
+                    sortColumn === "category" ? sortDirection : undefined
+                  }
+                  isSorted={sortColumn === "category"}
+                >
+                  Category
+                </TableHead>
+                <TableHead
+                  sortable
+                  columnKey="amount"
+                  onSort={handleSort}
+                  sortDirection={
+                    sortColumn === "amount" ? sortDirection : undefined
+                  }
+                  isSorted={sortColumn === "amount"}
+                >
+                  Amount
+                </TableHead>
+                <TableHead
+                  sortable
+                  columnKey="date"
+                  onSort={handleSort}
+                  sortDirection={
+                    sortColumn === "date" ? sortDirection : undefined
+                  }
+                  isSorted={sortColumn === "date"}
+                >
+                  Date
+                </TableHead>
+                <TableHead
+                  sortable
+                  columnKey="status"
+                  onSort={handleSort}
+                  sortDirection={
+                    sortColumn === "status" ? sortDirection : undefined
+                  }
+                  isSorted={sortColumn === "status"}
+                >
+                  Status
+                </TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sales.length === 0 ? (
+              {sortedSales.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={7}
@@ -168,7 +276,7 @@ export default function SalesPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                sales.map((sale) => (
+                sortedSales.map((sale) => (
                   <TableRow key={sale.id}>
                     <TableCell className="font-medium">
                       {sale.customer}
@@ -181,9 +289,7 @@ export default function SalesPage() {
                         minimumFractionDigits: 2,
                       })}
                     </TableCell>
-                    <TableCell>
-                      {sale.date.toLocaleDateString()}
-                    </TableCell>
+                    <TableCell>{sale.date.toLocaleDateString()}</TableCell>
                     <TableCell>
                       <span
                         className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
