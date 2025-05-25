@@ -19,7 +19,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { SaleForm } from "@/components/sale-form";
-import { generateSales, fallbackSales, type Sale } from "@/lib/fakeData";
+import { type Sale } from "@/lib/fakeData";
+import { LoadingState, ErrorState } from "@/components/ui/loading-state";
+import { useDataService } from "@/lib/dataService";
 import type { SaleFormValues } from "@/lib/schemas";
 import { FilterPopover } from "@/components/ui/filter-popover";
 
@@ -68,18 +70,44 @@ export default function SalesPage() {
   const [sortColumn, setSortColumn] = useState<SortKey>("date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [filters, setFilters] = useState<Filters>({});
+  const dataService = useDataService();
+  const [error, setError] = useState<string | undefined>();
 
   useEffect(() => {
-    try {
-      const fakeSales = generateSales(30);
-      setSales(fakeSales);
-    } catch (error) {
-      console.warn("Using fallback data:", error);
-      setSales(fallbackSales);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    const mounted = { current: true };
+    const loadSales = async () => {
+      try {
+        setLoading(true);
+        const response = await dataService.getSales();
+
+        if (!mounted.current) return;
+
+        if (response.error) {
+          throw new Error(response.error);
+        }
+
+        setSales(response.data);
+        setError(undefined);
+      } catch (error) {
+        console.error("Error loading sales:", error);
+        if (mounted.current) {
+          setError(
+            error instanceof Error ? error.message : "Failed to load sales"
+          );
+          setSales([]);
+        }
+      } finally {
+        if (mounted.current) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadSales();
+    return () => {
+      mounted.current = false;
+    };
+  }, [dataService]);
 
   const handleFilterChange = (column: SortKey, selectedOptions: string[]) => {
     setFilters((prev) => ({
@@ -186,14 +214,13 @@ export default function SalesPage() {
     );
     setSortColumn(column);
   };
-
   if (loading) {
+    return <LoadingState message="Loading sales data..." />;
+  }
+
+  if (error) {
     return (
-      <main className="p-6">
-        <div className="flex justify-center items-center h-64">
-          <div className="text-muted-foreground">Loading sales data...</div>
-        </div>
-      </main>
+      <ErrorState message={error} onRetry={() => window.location.reload()} />
     );
   }
 

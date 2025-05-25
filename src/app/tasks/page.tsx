@@ -10,6 +10,7 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
+import { LoadingState, ErrorState } from "@/components/ui/loading-state";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,7 +20,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { TaskForm } from "@/components/task-form";
-import { generateTasks, fallbackTasks, type Task } from "@/lib/fakeData";
+import { useDataService } from "@/lib/dataService";
+import { type Task } from "@/lib/fakeData";
 import type { TaskFormValues } from "@/lib/schemas";
 import { FilterPopover } from "@/components/ui/filter-popover";
 
@@ -52,37 +54,76 @@ const dueDateOptions = [
 ];
 
 export default function TasksPage() {
+  const dataService = useDataService();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | undefined>();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [dialogMode, setDialogMode] = useState<"add" | "edit" | "view">("add");
   const [sortColumn, setSortColumn] = useState<SortKey>("dueDate");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [filters, setFilters] = useState<Filters>({});
-
   useEffect(() => {
-    try {
-      const fakeTasks = generateTasks(20);
-      setTasks(fakeTasks);
-    } catch (error) {
-      console.warn("Using fallback data:", error);
-      setTasks(fallbackTasks);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-  const handleAddTask = (data: TaskFormValues) => {
-    const newTask: Task = {
-      id: tasks.length + 1,
-      ...data,
-      status: data.status,
-      priority: data.priority,
-      createdAt: new Date().toISOString().split("T")[0],
-    };
+    const mounted = { current: true };
+    const loadTasks = async () => {
+      try {
+        setLoading(true);
+        const response = await dataService.getTasks();
+        if (!mounted.current) return;
 
-    setTasks([...tasks, newTask]);
-    setDialogOpen(false);
+        if (response.error) {
+          throw new Error(response.error);
+        }
+        setTasks(response.data);
+        setError(undefined);
+      } catch (error) {
+        console.error("Error loading tasks:", error);
+        if (mounted.current) {
+          setError(
+            error instanceof Error ? error.message : "Failed to load tasks"
+          );
+          setTasks([]);
+        }
+      } finally {
+        if (mounted.current) {
+          setLoading(false);
+        }
+      }
+    };
+    loadTasks();
+    return () => {
+      mounted.current = false;
+    };
+  }, [dataService]);
+  const handleAddTask = async (data: TaskFormValues) => {
+    try {
+      const taskData = {
+        ...data,
+        status: data.status,
+        priority: data.priority,
+        createdAt: new Date().toISOString().split("T")[0],
+      };
+      const response = await dataService.addTask(taskData);
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      const newTask = Array.isArray(response.data)
+        ? response.data[0]
+        : response.data;
+      if (!newTask) {
+        throw new Error("No task data received from server");
+      }
+
+      setTasks((prev) => [...prev, newTask]);
+      setError(undefined);
+    } catch (error) {
+      console.error("Error adding task:", error);
+      setError(error instanceof Error ? error.message : "Failed to add task");
+    } finally {
+      setDialogOpen(false);
+    }
   };
 
   const handleSort = (columnKey: SortKey) => {
@@ -191,14 +232,13 @@ export default function TasksPage() {
 
     return filteredTasks;
   }, [tasks, filters, sortColumn, sortDirection]);
-
   if (loading) {
+    return <LoadingState message="Loading tasks..." />;
+  }
+
+  if (error) {
     return (
-      <main className="p-6">
-        <div className="flex justify-center items-center h-64">
-          <div className="text-muted-foreground">Loading tasks...</div>
-        </div>
-      </main>
+      <ErrorState message={error} onRetry={() => window.location.reload()} />
     );
   }
 

@@ -14,6 +14,36 @@ Add Sorting of each column. Defaults: Customers - Company, Tasks - Due Date / Ne
 
 Using the existing sorting mechanism, add sorting of the columns on the pages: On Customers - Status and Created, on Tasks - Status, Priority and Assigned To, on Log Sales - Customer, Product, Category, Amount, Date and Status
 
-Add a search bar below the action buttons Add Customer/Create Task and Log Sales where you can search for any data in the table.
 Add Filters in the columns that uses sorting. For instance on Sales: Amount levels <$1.000, $1.001 - $3.000, $3.001-$5.000 etc. Date filter on Year and/or Month. Status on the different status. Categories. Assigned To.
-In the dropdown list of filters, add a tick mark toggle to choose one or multiple filters within each Column
+
+Please create a landing page for this CRM dashboard. It shall have two modes. 1. The existing setup with Fake Data. 2. All existing functions, but using real data, so not using the fake data function. Update the code accordingly
+
+Add a search bar below the action buttons Add Customer/Create Task and Log Sales where you can search for any data in the table.
+
+
+The dashboard page should now work correctly with both fake and real data sources. The key changes made are:
+
+Added proper TypeScript interfaces for the stats and chart data
+Added error handling and proper loading states
+Using the new data service response format that includes error and loading states
+Using the LoadingState and ErrorState components for better UX
+Using Promise.all for parallel data fetching
+Proper error aggregation from all data sources
+Type-safe handling of the data
+The page will now:
+
+Show a loading state while fetching data
+Show an error state if something goes wrong
+Display the dashboard normally when data is loaded successfully
+Work seamlessly with both fake and real data sources
+You should now be able to:
+
+Start on the landing page
+Choose between fake or real data
+See the dashboard load properly with the chosen data source
+Switch between data sources using the Settings component
+
+Proper error handling
+Loading states
+Type-safe operations
+Clear navigation structure

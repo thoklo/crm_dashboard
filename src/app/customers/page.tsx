@@ -20,11 +20,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { CustomerForm } from "@/components/customer-form";
-import {
-  generateCustomers,
-  fallbackCustomers,
-  type Customer,
-} from "@/lib/fakeData";
+import { type Customer } from "@/lib/fakeData";
+import { LoadingState, ErrorState } from "@/components/ui/loading-state";
+import { useDataService } from "@/lib/dataService";
 import type { CustomerFormValues } from "@/lib/schemas";
 import { FilterPopover } from "@/components/ui/filter-popover";
 
@@ -48,8 +46,10 @@ const createdAtRanges = [
 ];
 
 export default function CustomersPage() {
+  const dataService = useDataService();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | undefined>();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
     null
@@ -60,16 +60,40 @@ export default function CustomersPage() {
   const [filters, setFilters] = useState<Filters>({});
 
   useEffect(() => {
-    try {
-      const fakeCustomers = generateCustomers(25);
-      setCustomers(fakeCustomers);
-    } catch (error) {
-      console.warn("Using fallback data:", error);
-      setCustomers(fallbackCustomers);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    const mounted = { current: true };
+    const loadCustomers = async () => {
+      try {
+        setLoading(true);
+        const response = await dataService.getCustomers();
+
+        if (!mounted.current) return;
+
+        if (response.error) {
+          throw new Error(response.error);
+        }
+
+        setCustomers(response.data);
+        setError(undefined);
+      } catch (error) {
+        console.error("Error loading customers:", error);
+        if (mounted.current) {
+          setError(
+            error instanceof Error ? error.message : "Failed to load customers"
+          );
+          setCustomers([]);
+        }
+      } finally {
+        if (mounted.current) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadCustomers();
+    return () => {
+      mounted.current = false;
+    };
+  }, [dataService]);
 
   const handleAddCustomer = (data: CustomerFormValues) => {
     const newCustomer: Customer = {
@@ -156,12 +180,12 @@ export default function CustomersPage() {
   }, [customers, filters, sortColumn, sortDirection]);
 
   if (loading) {
+    return <LoadingState message="Loading customers data..." />;
+  }
+
+  if (error) {
     return (
-      <main className="p-6">
-        <div className="flex justify-center items-center h-64">
-          <div className="text-muted-foreground">Loading customers...</div>
-        </div>
-      </main>
+      <ErrorState message={error} onRetry={() => window.location.reload()} />
     );
   }
 

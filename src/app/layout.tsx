@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
+import { DataSourceProvider } from "@/lib/DataSourceContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,35 +27,43 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <nav className="w-full flex items-center gap-2 px-8 py-4 border-b bg-white dark:bg-background shadow-sm sticky top-0 z-20">
-          <Link
-            href="/dashboard"
-            className="font-bold text-lg text-primary hover:text-primary/80 transition px-3 py-1 rounded-md hover:bg-muted"
-          >
-            Dashboard
-          </Link>
-          <Link
-            href="/customers"
-            className="text-muted-foreground hover:text-primary transition px-3 py-1 rounded-md hover:bg-muted"
-          >
-            Customers
-          </Link>
-          <Link
-            href="/tasks"
-            className="text-muted-foreground hover:text-primary transition px-3 py-1 rounded-md hover:bg-muted"
-          >
-            Tasks
-          </Link>
-          <Link
-            href="/sales"
-            className="text-muted-foreground hover:text-primary transition px-3 py-1 rounded-md hover:bg-muted"
-          >
-            Sales
-          </Link>
-        </nav>
-        <div className="min-h-screen bg-background text-foreground">
-          {children}
-        </div>
+        <DataSourceProvider>
+          <nav className="w-full flex items-center gap-2 px-8 py-4 border-b bg-white dark:bg-background shadow-sm sticky top-0 z-20">
+            <Link
+              href="/"
+              className="font-bold text-lg text-primary hover:text-primary/80 transition px-3 py-1 rounded-md hover:bg-muted"
+            >
+              Home
+            </Link>
+            <Link
+              href="/dashboard"
+              className="text-muted-foreground hover:text-primary transition px-3 py-1 rounded-md hover:bg-muted"
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/customers"
+              className="text-muted-foreground hover:text-primary transition px-3 py-1 rounded-md hover:bg-muted"
+            >
+              Customers
+            </Link>
+            <Link
+              href="/tasks"
+              className="text-muted-foreground hover:text-primary transition px-3 py-1 rounded-md hover:bg-muted"
+            >
+              Tasks
+            </Link>
+            <Link
+              href="/sales"
+              className="text-muted-foreground hover:text-primary transition px-3 py-1 rounded-md hover:bg-muted"
+            >
+              Sales
+            </Link>
+          </nav>
+          <div className="min-h-screen bg-background text-foreground">
+            {children}
+          </div>
+        </DataSourceProvider>
       </body>
     </html>
   );

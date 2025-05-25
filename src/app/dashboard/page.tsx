@@ -14,15 +14,10 @@ import {
   BarChart,
   Bar,
 } from "recharts";
-import {
-  generateCustomers,
-  generateTasks,
-  generateSales,
-  generateSalesAnalytics,
-  fallbackCustomers,
-  fallbackTasks,
-  fallbackSales,
-} from "@/lib/fakeData";
+import { Settings } from "@/components/settings";
+import { useDataService } from "@/lib/dataService";
+import { LoadingState, ErrorState } from "@/components/ui/loading-state";
+import type { Customer, Task, Sale } from "@/lib/fakeData";
 
 interface ChartData {
   month: string;
@@ -31,73 +26,105 @@ interface ChartData {
   revenue?: number;
 }
 
+interface DashboardStats {
+  activeCustomers: number;
+  completedTasks: number;
+  totalSales: number;
+  loading: boolean;
+  error?: string;
+}
+
 export default function DashboardPage() {
-  const [stats, setStats] = useState({
+  const dataService = useDataService();
+  const [stats, setStats] = useState<DashboardStats>({
     activeCustomers: 0,
     completedTasks: 0,
     totalSales: 0,
     loading: true,
   });
   const [chartData, setChartData] = useState<ChartData[]>([]);
-
   useEffect(() => {
-    try {
-      // Generate or use fallback data
-      const customers = generateCustomers(50);
-      const tasks = generateTasks(30);
-      const sales = generateSales(40);
-      const analytics = generateSalesAnalytics();
+    const mounted = { current: true };
 
-      const activeCustomers = customers.filter(
-        (c) => c.status === "Active"
-      ).length;
-      const completedTasks = tasks.filter(
-        (t) => t.status === "Completed"
-      ).length;
-      const totalSalesAmount = sales.reduce(
-        (sum, sale) => sum + sale.amount,
-        0
-      );
+    const loadDashboardData = async () => {
+      if (!mounted.current) return;
 
-      setStats({
-        activeCustomers,
-        completedTasks,
-        totalSales: totalSalesAmount,
-        loading: false,
-      });
+      setStats((prev) => ({ ...prev, loading: true, error: undefined }));
 
-      setChartData(analytics);
-    } catch (error) {
-      console.warn("Using fallback data:", error);
-      // Fallback calculations
-      const activeCustomers = fallbackCustomers.filter(
-        (c) => c.status === "Active"
-      ).length;
-      const completedTasks = fallbackTasks.filter(
-        (t) => t.status === "Completed"
-      ).length;
-      const totalSalesAmount = fallbackSales.reduce(
-        (sum, sale) => sum + sale.amount,
-        0
-      );
+      try {
+        const [customersResponse, tasksResponse, salesResponse] =
+          await Promise.all([
+            dataService.getCustomers(),
+            dataService.getTasks(),
+            dataService.getSales(),
+          ]);
 
-      setStats({
-        activeCustomers,
-        completedTasks,
-        totalSales: totalSalesAmount,
-        loading: false,
-      });
+        // Check for errors
+        const errors = [
+          customersResponse.error,
+          tasksResponse.error,
+          salesResponse.error,
+        ].filter(Boolean);
 
-      // Simple fallback chart data
-      setChartData([
-        { month: "Jan", sales: 12000, customers: 45 },
-        { month: "Feb", sales: 15000, customers: 52 },
-        { month: "Mar", sales: 18000, customers: 61 },
-        { month: "Apr", sales: 22000, customers: 68 },
-        { month: "May", sales: 19000, customers: 71 },
-      ]);
-    }
-  }, []);
+        if (errors.length > 0) {
+          throw new Error(errors.join(", "));
+        }
+
+        const activeCustomers = customersResponse.data.filter(
+          (customer: Customer) => customer.status === "Active"
+        ).length;
+
+        const completedTasks = tasksResponse.data.filter(
+          (task: Task) => task.status === "Completed"
+        ).length;
+
+        const totalSalesAmount = salesResponse.data.reduce(
+          (sum: number, sale: Sale) => sum + sale.amount,
+          0
+        );
+
+        setStats({
+          activeCustomers,
+          completedTasks,
+          totalSales: totalSalesAmount,
+          loading: false,
+        });
+
+        // Create chart data from sales
+        const monthlyData = salesResponse.data.reduce(
+          (acc: { [key: string]: ChartData }, sale: Sale) => {
+            const month = new Date(sale.date).toLocaleString("default", {
+              month: "short",
+            });
+            if (!acc[month]) {
+              acc[month] = { month, sales: 0, customers: 0 };
+            }
+            acc[month].sales += sale.amount;
+            return acc;
+          },
+          {}
+        );
+
+        setChartData(Object.values(monthlyData));
+      } catch (error) {
+        console.error("Error loading dashboard data:", error);
+        setStats((prev) => ({
+          ...prev,
+          loading: false,
+          error:
+            error instanceof Error
+              ? error.message
+              : "An error occurred loading the dashboard",
+        }));
+        setChartData([]);
+      }
+    };
+    loadDashboardData();
+
+    return () => {
+      mounted.current = false;
+    };
+  }, [dataService]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -109,22 +136,28 @@ export default function DashboardPage() {
   };
 
   if (stats.loading) {
+    return <LoadingState message="Loading dashboard data..." />;
+  }
+
+  if (stats.error) {
     return (
-      <main className="p-6">
-        <div className="flex justify-center items-center h-64">
-          <div className="text-muted-foreground">Loading dashboard...</div>
-        </div>
-      </main>
+      <ErrorState
+        message={stats.error}
+        onRetry={() => window.location.reload()}
+      />
     );
   }
 
   return (
     <main className="p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold mb-2">CRM Dashboard</h1>
-        <p className="text-muted-foreground">
-          Welcome back! Here&apos;s what&apos;s happening with your business.
-        </p>
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">CRM Dashboard</h1>
+          <p className="text-muted-foreground">
+            Welcome back! Here&apos;s what&apos;s happening with your business.
+          </p>
+        </div>
+        <Settings />
       </div>
 
       {/* Key Metrics */}
