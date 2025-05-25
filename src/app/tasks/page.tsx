@@ -311,6 +311,57 @@ export default function TasksPage() {
                 setDialogMode("add");
               }}
               readOnly={dialogMode === "view"}
+              footerButtons={
+                dialogMode !== "add" && (
+                  <div className="flex justify-between w-full">
+                    <Button
+                      variant="outline"
+                      onClick={(e) => {
+                        e.preventDefault(); // Prevent form submission
+                        const currentIndex = filteredAndSortedTasks.findIndex(
+                          (t) => t.id === selectedTask?.id
+                        );
+                        if (currentIndex > 0) {
+                          const prevTask =
+                            filteredAndSortedTasks[currentIndex - 1];
+                          setSelectedTask(prevTask);
+                        }
+                      }}
+                      disabled={
+                        !selectedTask ||
+                        filteredAndSortedTasks.findIndex(
+                          (t) => t.id === selectedTask.id
+                        ) === 0
+                      }
+                    >
+                      ← Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={(e) => {
+                        e.preventDefault(); // Prevent form submission
+                        const currentIndex = filteredAndSortedTasks.findIndex(
+                          (t) => t.id === selectedTask?.id
+                        );
+                        if (currentIndex < filteredAndSortedTasks.length - 1) {
+                          const nextTask =
+                            filteredAndSortedTasks[currentIndex + 1];
+                          setSelectedTask(nextTask);
+                        }
+                      }}
+                      disabled={
+                        !selectedTask ||
+                        filteredAndSortedTasks.findIndex(
+                          (t) => t.id === selectedTask.id
+                        ) ===
+                          filteredAndSortedTasks.length - 1
+                      }
+                    >
+                      Next →
+                    </Button>
+                  </div>
+                )
+              }
             />
           </DialogContent>
         </Dialog>

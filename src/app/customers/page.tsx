@@ -250,6 +250,62 @@ export default function CustomersPage() {
                 setDialogMode("add");
               }}
               readOnly={dialogMode === "view"}
+              footerButtons={
+                dialogMode !== "add" && (
+                  <div className="flex justify-between w-full">
+                    <Button
+                      variant="outline"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        const currentIndex =
+                          filteredAndSortedCustomers.findIndex(
+                            (c) => c.id === selectedCustomer?.id
+                          );
+                        if (currentIndex > 0) {
+                          const prevCustomer =
+                            filteredAndSortedCustomers[currentIndex - 1];
+                          setSelectedCustomer(prevCustomer);
+                        }
+                      }}
+                      disabled={
+                        !selectedCustomer ||
+                        filteredAndSortedCustomers.findIndex(
+                          (c) => c.id === selectedCustomer.id
+                        ) === 0
+                      }
+                    >
+                      ← Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        const currentIndex =
+                          filteredAndSortedCustomers.findIndex(
+                            (c) => c.id === selectedCustomer?.id
+                          );
+                        if (
+                          currentIndex <
+                          filteredAndSortedCustomers.length - 1
+                        ) {
+                          const nextCustomer =
+                            filteredAndSortedCustomers[currentIndex + 1];
+                          setSelectedCustomer(nextCustomer);
+                        }
+                      }}
+                      disabled={
+                        !selectedCustomer ||
+                        filteredAndSortedCustomers.findIndex(
+                          (c) => c.id === selectedCustomer.id
+                        ) ===
+                          filteredAndSortedCustomers.length - 1
+                      }
+                    >
+                      Next →
+                    </Button>
+                  </div>
+                )
+              }
             />
           </DialogContent>
         </Dialog>

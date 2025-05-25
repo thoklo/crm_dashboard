@@ -20,21 +20,33 @@ import {
 } from "@/components/ui/select";
 import { customerFormSchema, type CustomerFormValues } from "@/lib/schemas";
 import { DialogFooter } from "./ui/dialog";
+import { ReactNode } from "react";
 
 interface CustomerFormProps {
-  defaultValues?: Partial<CustomerFormValues>;
+  defaultValues?: CustomerFormValues;
   onSubmit: (data: CustomerFormValues) => void;
   onCancel: () => void;
   readOnly?: boolean;
+  footerButtons?: ReactNode;
 }
 
-export function CustomerForm({ defaultValues, onSubmit, onCancel, readOnly }: CustomerFormProps) {  const defaultFormValues = React.useMemo<CustomerFormValues>(() => ({
-    name: "",
-    email: "",
-    phone: "",
-    company: "",
-    status: defaultValues?.status || "Active",
-  }), [defaultValues]);
+export function CustomerForm({
+  defaultValues,
+  onSubmit,
+  onCancel,
+  readOnly = false,
+  footerButtons,
+}: CustomerFormProps) {
+  const defaultFormValues = React.useMemo<CustomerFormValues>(
+    () => ({
+      name: "",
+      email: "",
+      phone: "",
+      company: "",
+      status: defaultValues?.status || "Active",
+    }),
+    [defaultValues]
+  );
 
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(customerFormSchema),
@@ -160,18 +172,21 @@ export function CustomerForm({ defaultValues, onSubmit, onCancel, readOnly }: Cu
           )}
         />
 
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            {readOnly ? "Close" : "Cancel"}
-          </Button>
-          {!readOnly && (
-            <Button
-              type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg transition-colors duration-200 px-6 py-2 rounded-md border-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
-            >
-              {defaultValues ? "Update Customer" : "Add Customer"}
+        <DialogFooter className="flex-col gap-4">
+          {footerButtons}
+          <div className="flex justify-end gap-2 w-full">
+            <Button type="button" variant="outline" onClick={onCancel}>
+              {readOnly ? "Close" : "Cancel"}
             </Button>
-          )}
+            {!readOnly && (
+              <Button
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg transition-colors duration-200 px-6 py-2 rounded-md border-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
+              >
+                {defaultValues ? "Update Customer" : "Add Customer"}
+              </Button>
+            )}
+          </div>
         </DialogFooter>
       </form>
     </Form>

@@ -18,7 +18,12 @@ Add Filters in the columns that uses sorting. For instance on Sales: Amount leve
 
 Please create a landing page for this CRM dashboard. It shall have two modes. 1. The existing setup with Fake Data. 2. All existing functions, but using real data, so not using the fake data function. Update the code accordingly
 
+Add two buttons on all Edit and View forms that says Previous and Next, that goes to the next entry in the table
+
+
 Add a search bar below the action buttons Add Customer/Create Task and Log Sales where you can search for any data in the table.
+
+
 
 
 The dashboard page should now work correctly with both fake and real data sources. The key changes made are:

@@ -20,19 +20,22 @@ import {
 } from "@/components/ui/select";
 import { saleFormSchema, type SaleFormValues } from "@/lib/schemas";
 import { DialogFooter } from "./ui/dialog";
+import { ReactNode } from "react";
 
 interface SaleFormProps {
   defaultValues?: Partial<SaleFormValues>;
   onSubmit: (data: SaleFormValues) => void;
   onCancel: () => void;
   readOnly?: boolean;
+  footerButtons?: ReactNode;
 }
 
 export function SaleForm({
   defaultValues,
   onSubmit,
   onCancel,
-  readOnly,
+  readOnly = false,
+  footerButtons,
 }: SaleFormProps) {
   const defaultFormValues = React.useMemo<SaleFormValues>(
     () => ({
@@ -201,7 +204,9 @@ export function SaleForm({
                   className="w-48"
                   {...field}
                   disabled={readOnly}
-                  value={field.value ? field.value.toISOString().split("T")[0] : ""}
+                  value={
+                    field.value ? field.value.toISOString().split("T")[0] : ""
+                  }
                   onChange={(e) => {
                     field.onChange(new Date(e.target.value));
                   }}
@@ -211,18 +216,21 @@ export function SaleForm({
             </FormItem>
           )}
         />
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            {readOnly ? "Close" : "Cancel"}
-          </Button>
-          {!readOnly && (
-            <Button
-              type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg transition-colors duration-200 px-6 py-2 rounded-md border-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
-            >
-              {defaultValues ? "Update Sale" : "Log Sale"}
+        <DialogFooter className="flex-col gap-4">
+          {footerButtons}
+          <div className="flex justify-end gap-2 w-full">
+            <Button type="button" variant="outline" onClick={onCancel}>
+              {readOnly ? "Close" : "Cancel"}
             </Button>
-          )}
+            {!readOnly && (
+              <Button
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg transition-colors duration-200 px-6 py-2 rounded-md border-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
+              >
+                {defaultValues ? "Update Sale" : "Log Sale"}
+              </Button>
+            )}
+          </div>
         </DialogFooter>
       </form>
     </Form>

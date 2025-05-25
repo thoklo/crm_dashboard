@@ -19,26 +19,41 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { taskFormSchema, type TaskFormValues } from "@/lib/schemas";
-import { DialogFooter } from "./ui/dialog";
 
 interface TaskFormProps {
   defaultValues?: Partial<TaskFormValues>;
   onSubmit: (data: TaskFormValues) => void;
   onCancel: () => void;
   readOnly?: boolean;
+  footerButtons?: React.ReactNode;
 }
 
-const STATUS_OPTIONS = ["To Do", "In Progress", "Completed", "Blocked"] as const;
+const STATUS_OPTIONS = [
+  "To Do",
+  "In Progress",
+  "Completed",
+  "Blocked",
+] as const;
 const PRIORITY_OPTIONS = ["Low", "Medium", "High", "Critical"] as const;
 
-export function TaskForm({ defaultValues, onSubmit, onCancel, readOnly }: TaskFormProps) {  const defaultFormValues = React.useMemo<TaskFormValues>(() => ({
-    title: "",
-    description: "",
-    assignedTo: "",
-    status: defaultValues?.status || "To Do",
-    priority: defaultValues?.priority || "Medium",
-    dueDate: new Date().toISOString().split('T')[0],
-  }), [defaultValues]);
+export function TaskForm({
+  defaultValues,
+  onSubmit,
+  onCancel,
+  readOnly = false,
+  footerButtons,
+}: TaskFormProps) {
+  const defaultFormValues = React.useMemo<TaskFormValues>(
+    () => ({
+      title: "",
+      description: "",
+      assignedTo: "",
+      status: defaultValues?.status || "To Do",
+      priority: defaultValues?.priority || "Medium",
+      dueDate: new Date().toISOString().split("T")[0],
+    }),
+    [defaultValues]
+  );
 
   const form = useForm<TaskFormValues>({
     resolver: zodResolver(taskFormSchema),
@@ -46,7 +61,7 @@ export function TaskForm({ defaultValues, onSubmit, onCancel, readOnly }: TaskFo
   });
 
   React.useEffect(() => {
-    const newValues = defaultValues 
+    const newValues = defaultValues
       ? { ...defaultFormValues, ...defaultValues }
       : defaultFormValues;
     form.reset(newValues);
@@ -186,19 +201,19 @@ export function TaskForm({ defaultValues, onSubmit, onCancel, readOnly }: TaskFo
           )}
         />
 
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button type="button" variant="outline" onClick={onCancel}>
-            {readOnly ? "Close" : "Cancel"}
-          </Button>
-          {!readOnly && (
-            <Button
-              type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg transition-colors duration-200 px-6 py-2 rounded-md border-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
-            >
-              {defaultValues ? "Update Task" : "Add Task"}
+        <div className="flex flex-col gap-4 pt-4">
+          {footerButtons}
+          <div className="flex justify-end gap-4">
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancel
             </Button>
-          )}
-        </DialogFooter>
+            {!readOnly && (
+              <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+                {defaultValues ? "Update" : "Create"}
+              </Button>
+            )}
+          </div>
+        </div>
       </form>
     </Form>
   );

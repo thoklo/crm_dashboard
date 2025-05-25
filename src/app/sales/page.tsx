@@ -293,6 +293,57 @@ export default function SalesPage() {
                 setDialogMode("add");
               }}
               readOnly={dialogMode === "view"}
+              footerButtons={
+                dialogMode !== "add" && (
+                  <div className="flex justify-between w-full">
+                    <Button
+                      variant="outline"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        const currentIndex = filteredAndSortedSales.findIndex(
+                          (s) => s.id === selectedSale?.id
+                        );
+                        if (currentIndex > 0) {
+                          const prevSale =
+                            filteredAndSortedSales[currentIndex - 1];
+                          setSelectedSale(prevSale);
+                        }
+                      }}
+                      disabled={
+                        !selectedSale ||
+                        filteredAndSortedSales.findIndex(
+                          (s) => s.id === selectedSale.id
+                        ) === 0
+                      }
+                    >
+                      ← Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        const currentIndex = filteredAndSortedSales.findIndex(
+                          (s) => s.id === selectedSale?.id
+                        );
+                        if (currentIndex < filteredAndSortedSales.length - 1) {
+                          const nextSale =
+                            filteredAndSortedSales[currentIndex + 1];
+                          setSelectedSale(nextSale);
+                        }
+                      }}
+                      disabled={
+                        !selectedSale ||
+                        filteredAndSortedSales.findIndex(
+                          (s) => s.id === selectedSale.id
+                        ) ===
+                          filteredAndSortedSales.length - 1
+                      }
+                    >
+                      Next →
+                    </Button>
+                  </div>
+                )
+              }
             />
           </DialogContent>
         </Dialog>
