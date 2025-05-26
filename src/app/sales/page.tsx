@@ -61,7 +61,7 @@ const dateOptions = [
   { label: "Last year", value: "lastYear" },
 ];
 
-export default function SalesPage() {
+export default function SalesPage() {  const dataService = useDataService() as ReturnType<typeof useDataService>;
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -195,17 +195,27 @@ export default function SalesPage() {
 
     return filteredSales;
   }, [sales, filters, sortColumn, sortDirection]);
+  const handleAddSale = async (data: SaleFormValues) => {
+    try {
+      const response = await dataService.addSale(data);
+      if (response.error) {
+        throw new Error(response.error);
+      }
 
-  const handleAddSale = (data: SaleFormValues) => {
-    const newSale: Sale = {
-      id: sales.length + 1,
-      ...data,
-      createdAt: new Date().toISOString().split("T")[0],
-      date: new Date(),
-    };
+      const newSale = Array.isArray(response.data)
+        ? response.data[0]
+        : response.data;
+      if (!newSale) {
+        throw new Error("No sale data received from server");
+      }
 
-    setSales([...sales, newSale]);
+      setSales((prev) => [...prev, newSale]);
+      setError(undefined);
     setDialogOpen(false);
+    } catch (error) {
+      console.error("Error adding sale:", error);
+      setError(error instanceof Error ? error.message : "Failed to add sale");
+    }
   };
 
   const handleSort = (column: SortKey) => {
@@ -272,16 +282,40 @@ export default function SalesPage() {
                     }
                   : undefined
               }
-              onSubmit={(data) => {
+              onSubmit={async (data) => {
                 if (dialogMode === "edit" && selectedSale) {
-                  const updatedSales = sales.map((s) =>
-                    s.id === selectedSale.id
-                      ? { ...s, ...data, status: data.status }
-                      : s
-                  );
-                  setSales(updatedSales);
+                  try {
+                    const response = await dataService.updateSale(
+                      selectedSale.id,
+                      data
+                    );
+                    if (response.error) {
+                      throw new Error(response.error);
+                    }
+
+                    const updatedSale = Array.isArray(response.data)
+                      ? response.data[0]
+                      : response.data;
+                    if (!updatedSale) {
+                      throw new Error("No sale data received from server");
+                    }
+
+                    setSales((prev) =>
+                      prev.map((s) =>
+                        s.id === selectedSale.id ? updatedSale : s
+                      )
+                    );
+                    setError(undefined);
+                  } catch (error) {
+                    console.error("Error updating sale:", error);
+                    setError(
+                      error instanceof Error
+                        ? error.message
+                        : "Failed to update sale"
+                    );
+                  }
                 } else {
-                  handleAddSale(data);
+                  await handleAddSale(data);
                 }
                 setDialogOpen(false);
                 setSelectedSale(null);

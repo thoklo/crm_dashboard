@@ -46,11 +46,13 @@ export async function PUT(request: Request, { params }: RouteParams) {
     if (index === -1) {
       return NextResponse.json({ error: 'Sale not found' }, { status: 404 });
     }
-    
+      const existingSale = data.sales[index];
     const updatedSale = saleSchema.parse({
-      ...data.sales[index],
+        ...existingSale,
       ...validatedUpdates,
-      id // Ensure ID doesn't change
+        id, // Ensure ID doesn't change
+        createdAt: existingSale.createdAt, // Preserve original createdAt
+        date: validatedUpdates.date || existingSale.date, // Use new date if provided, otherwise keep existing
     });
     
     data.sales[index] = updatedSale;

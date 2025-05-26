@@ -47,10 +47,12 @@ export async function PUT(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
     }
     
+    const existingCustomer = data.customers[index];
     const updatedCustomer = customerSchema.parse({
-      ...data.customers[index], 
+      ...existingCustomer,
       ...validatedUpdates,
-      id // Ensure ID doesn't change
+      id, // Ensure ID doesn't change
+      createdAt: existingCustomer.createdAt, // Preserve original createdAt
     });
     
     data.customers[index] = updatedCustomer;
