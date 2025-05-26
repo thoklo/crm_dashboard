@@ -1,0 +1,34 @@
+{
+  "tasks": [
+    {
+      "title": "Create a CRM dashboard",
+      "description": "Webapp to manage all",
+      "assignedTo": "Nora Servidio",
+      "status": "To Do",
+      "priority": "High",
+      "dueDate": "2025-05-30",
+      "id": 1,
+      "createdAt": "2025-05-26"
+    },
+    {
+      "title": "Make sure Customers and Sales are correct",
+      "description": "Make sure Customers and Sales are correct",
+      "assignedTo": "Kelvin Swift",
+      "status": "To Do",
+      "priority": "Critical",
+      "dueDate": "2025-05-27",
+      "id": 2,
+      "createdAt": "2025-05-26"
+    },
+    {
+      "title": "Test dashboard",
+      "description": "Show completed tasks",
+      "assignedTo": "Kelvin Swift",
+      "status": "Completed",
+      "priority": "Medium",
+      "dueDate": "2025-05-26",
+      "id": 3,
+      "createdAt": "2025-05-26"
+    }
+  ]
+}

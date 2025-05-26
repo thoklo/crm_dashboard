@@ -26,6 +26,22 @@ export const saleFormSchema = z.object({
   date: z.date(),
 });
 
+// Full API schemas including all fields
+export const customerSchema = customerFormSchema.extend({
+  id: z.number(),
+  createdAt: z.string(),
+});
+
+export const taskSchema = taskFormSchema.extend({
+  id: z.number(),
+  createdAt: z.string(),
+});
+
+export const saleSchema = saleFormSchema.extend({
+  id: z.number(),
+  createdAt: z.string(),
+});
+
 export type CustomerFormValues = z.infer<typeof customerFormSchema>;
 export type TaskFormValues = z.infer<typeof taskFormSchema>;
 export type SaleFormValues = z.infer<typeof saleFormSchema>;
