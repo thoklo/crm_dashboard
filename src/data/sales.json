@@ -1,3 +1,34 @@
 {
-  "sales": []
+  "sales": [
+    {
+      "customer": "Test Customer",
+      "product": "Test Product",
+      "amount": 1000,
+      "status": "Completed",
+      "category": "Software",
+      "date": "2025-05-27T12:00:00.000Z",
+      "id": 1,
+      "createdAt": "2025-05-26T17:41:27.231Z"
+    },
+    {
+      "customer": "Evelange",
+      "product": "Electric scooter",
+      "amount": 299,
+      "status": "Pending",
+      "category": "Hardware",
+      "date": "2025-05-22T00:00:00.000Z",
+      "id": 2,
+      "createdAt": "2025-05-26T17:51:38.947Z"
+    },
+    {
+      "customer": "NoraLinguist",
+      "product": "A very fast PC that ThoHas could have fun",
+      "amount": 4999,
+      "status": "Pending",
+      "category": "Hardware",
+      "date": "2025-05-31T00:00:00.000Z",
+      "id": 3,
+      "createdAt": "2025-05-26T18:05:01.853Z"
+    }
+  ]
 }

@@ -54,7 +54,7 @@ const dueDateOptions = [
 ];
 
 export default function TasksPage() {
-  const dataService = useDataService();
+  const dataService = useDataService() as ReturnType<typeof useDataService>;
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
@@ -285,21 +285,40 @@ export default function TasksPage() {
                     }
                   : undefined
               }
-              onSubmit={(data) => {
+              onSubmit={async (data) => {
                 if (dialogMode === "edit" && selectedTask) {
-                  const updatedTasks = tasks.map((t) =>
-                    t.id === selectedTask.id
-                      ? {
-                          ...t,
-                          ...data,
-                          status: data.status,
-                          priority: data.priority,
-                        }
-                      : t
-                  );
-                  setTasks(updatedTasks);
+                  try {
+                    const response = await dataService.updateTask(
+                      selectedTask.id,
+                      data
+                    );
+                    if (response.error) {
+                      throw new Error(response.error);
+                    }
+
+                    const updatedTask = Array.isArray(response.data)
+                      ? response.data[0]
+                      : response.data;
+                    if (!updatedTask) {
+                      throw new Error("No task data received from server");
+                    }
+
+                    setTasks((prev) =>
+                      prev.map((t) =>
+                        t.id === selectedTask.id ? updatedTask : t
+                      )
+                    );
+                    setError(undefined);
+                  } catch (error) {
+                    console.error("Error updating task:", error);
+                    setError(
+                      error instanceof Error
+                        ? error.message
+                        : "Failed to update task"
+                    );
+                  }
                 } else {
-                  handleAddTask(data);
+                  await handleAddTask(data);
                 }
                 setDialogOpen(false);
                 setSelectedTask(null);

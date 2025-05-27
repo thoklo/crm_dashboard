@@ -1,3 +1,31 @@
 {
-  "customers": []
+  "customers": [
+    {
+      "name": "Nora Servidio",
+      "email": "noralanguages@gmail.com",
+      "phone": "+1 555 123 4567",
+      "company": "NoraLinguist",
+      "status": "Active",
+      "id": 1,
+      "createdAt": "2025-05-26"
+    },
+    {
+      "name": "Thomas Klock",
+      "email": "hthomasklock@gmail.com",
+      "phone": "+1 623 242 2308",
+      "company": "NA",
+      "status": "Active",
+      "id": 2,
+      "createdAt": "2025-05-26"
+    },
+    {
+      "name": "xyz",
+      "email": "a.b@c.com",
+      "phone": "1-635-256-7312",
+      "company": "NA",
+      "status": "Inactive",
+      "id": 3,
+      "createdAt": "2025-05-26"
+    }
+  ]
 }

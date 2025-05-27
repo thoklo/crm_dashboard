@@ -61,7 +61,8 @@ const dateOptions = [
   { label: "Last year", value: "lastYear" },
 ];
 
-export default function SalesPage() {  const dataService = useDataService() as ReturnType<typeof useDataService>;
+export default function SalesPage() {
+  const dataService = useDataService() as ReturnType<typeof useDataService>;
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -70,7 +71,6 @@ export default function SalesPage() {  const dataService = useDataService() as R
   const [sortColumn, setSortColumn] = useState<SortKey>("date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [filters, setFilters] = useState<Filters>({});
-  const dataService = useDataService();
   const [error, setError] = useState<string | undefined>();
 
   useEffect(() => {
@@ -176,10 +176,9 @@ export default function SalesPage() {  const dataService = useDataService() as R
             ? Number(aValue) - Number(bValue)
             : Number(bValue) - Number(aValue);
         }
-
         if (sortColumn === "date") {
-          const aDate = new Date(aValue as Date);
-          const bDate = new Date(bValue as Date);
+          const aDate = new Date(aValue);
+          const bDate = new Date(bValue);
           return sortDirection === "asc"
             ? aDate.getTime() - bDate.getTime()
             : bDate.getTime() - aDate.getTime();
@@ -195,9 +194,20 @@ export default function SalesPage() {  const dataService = useDataService() as R
 
     return filteredSales;
   }, [sales, filters, sortColumn, sortDirection]);
+
   const handleAddSale = async (data: SaleFormValues) => {
     try {
-      const response = await dataService.addSale(data);
+      const currentDate = new Date().toISOString();
+      const saleData = {
+        customer: data.customer,
+        product: data.product,
+        amount: data.amount,
+        status: data.status,
+        category: data.category,
+        date: data.date instanceof Date ? data.date : new Date(data.date),
+        createdAt: currentDate,
+      };
+      const response = await dataService.addSale(saleData);
       if (response.error) {
         throw new Error(response.error);
       }
@@ -211,7 +221,7 @@ export default function SalesPage() {  const dataService = useDataService() as R
 
       setSales((prev) => [...prev, newSale]);
       setError(undefined);
-    setDialogOpen(false);
+      setDialogOpen(false);
     } catch (error) {
       console.error("Error adding sale:", error);
       setError(error instanceof Error ? error.message : "Failed to add sale");
@@ -278,7 +288,7 @@ export default function SalesPage() {  const dataService = useDataService() as R
                         | "Pending"
                         | "Cancelled",
                       category: selectedSale.category,
-                      date: selectedSale.date,
+                      date: new Date(selectedSale.date),
                     }
                   : undefined
               }
@@ -523,7 +533,9 @@ export default function SalesPage() {  const dataService = useDataService() as R
                         minimumFractionDigits: 2,
                       })}
                     </TableCell>
-                    <TableCell>{sale.date.toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      {new Date(sale.date).toLocaleDateString()}
+                    </TableCell>
                     <TableCell>
                       <span
                         className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${

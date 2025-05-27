@@ -217,8 +217,7 @@ export function useDataService() {
               error instanceof Error ? error.message : "Failed to add sale",
             isLoading: false,
           };
-        }
-      }, // Update customer
+        }      }, // Update customer
       async updateCustomer(
         id: number,
         customer: Partial<Customer>
@@ -230,7 +229,7 @@ export function useDataService() {
                 {
                   id,
                   ...customer,
-                  createdAt: new Date().toISOString().split("T")[0],
+                  createdAt: customer.createdAt || new Date().toISOString().split("T")[0],
                 } as Customer,
               ],
               isLoading: false,
@@ -260,6 +259,45 @@ export function useDataService() {
             isLoading: false,
           };
         }
+      }, // Update task
+      async updateTask(
+        id: number,
+        task: Partial<Task>
+      ): Promise<ApiResponse<Task>> {
+        try {
+          if (dataSource === "fake") {
+            return {
+              data: [
+                {
+                  id,
+                  ...task,
+                  createdAt: task.createdAt || new Date().toISOString().split("T")[0],
+                } as Task,
+              ],
+              isLoading: false,
+            };
+          }
+
+          const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(task),
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const data = await response.json();
+          return { data: [data], isLoading: false };
+        } catch (error) {
+          console.error("Error in updateTask:", error);
+          return {
+            data: [],
+            error: error instanceof Error ? error.message : "Failed to update task",
+            isLoading: false,
+          };
+        }
       }, // Update sale
       async updateSale(
         id: number,
@@ -272,7 +310,9 @@ export function useDataService() {
                 {
                   id,
                   ...sale,
-                  createdAt: new Date().toISOString().split("T")[0],
+                  createdAt:
+                    sale.createdAt || new Date().toISOString().split("T")[0],
+                  date: sale.date || new Date(),
                 } as Sale,
               ],
               isLoading: false,

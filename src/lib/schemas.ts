@@ -23,7 +23,11 @@ export const saleFormSchema = z.object({
   amount: z.number().min(0, "Amount must be positive"),
   status: z.enum(["Completed", "Pending", "Cancelled"]),
   category: z.string().min(2, "Category is required"),
-  date: z.date(),
+  date: z.union([
+    z.date(),
+    z.string().transform((str) => new Date(str)),
+    z.instanceof(Date),
+  ]),
 });
 
 // Full API schemas including all fields

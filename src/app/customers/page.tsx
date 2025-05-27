@@ -1,7 +1,7 @@
 // Customers page for CRM
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import {
   Table,
@@ -46,16 +46,14 @@ const createdAtRanges = [
 ];
 
 export default function CustomersPage() {
-  const dataService = useDataService();
+  const dataService = useDataService() as ReturnType<typeof useDataService>;
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | undefined>();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
-    null
-  );
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [dialogMode, setDialogMode] = useState<"add" | "edit" | "view">("add");
-  const [sortColumn, setSortColumn] = useState<SortKey>("company"); // Default sort by Company
+  const [sortColumn, setSortColumn] = useState<SortKey>("company");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [filters, setFilters] = useState<Filters>({});
 
@@ -65,7 +63,6 @@ export default function CustomersPage() {
       try {
         setLoading(true);
         const response = await dataService.getCustomers();
-
         if (!mounted.current) return;
 
         if (response.error) {
@@ -95,32 +92,48 @@ export default function CustomersPage() {
     };
   }, [dataService]);
 
-  const handleAddCustomer = (data: CustomerFormValues) => {
-    const newCustomer: Customer = {
-      id: customers.length + 1,
-      ...data,
-      createdAt: new Date().toISOString().split("T")[0],
-    };
+  const handleAddCustomer = useCallback(async (data: CustomerFormValues & { createdAt?: string }) => {
+    try {
+      const customerData = {
+        ...data,
+        createdAt: data.createdAt || new Date().toISOString().split('T')[0]
+      };
+      const response = await dataService.addCustomer(customerData);
+      if (response.error) {
+        throw new Error(response.error);
+      }
 
-    setCustomers([...customers, newCustomer]);
-    setDialogOpen(false);
-  };
+      const newCustomer = Array.isArray(response.data)
+        ? response.data[0]
+        : response.data;
+      if (!newCustomer) {
+        throw new Error("No customer data received from server");
+      }
 
-  const handleSort = (columnKey: SortKey) => {
-    if (sortColumn === columnKey) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortColumn(columnKey);
-      setSortDirection("asc"); // Default to ascending when changing column
+      setCustomers((prev) => [...prev, newCustomer]);
+      setError(undefined);
+      setDialogOpen(false);
+    } catch (error) {
+      console.error("Error adding customer:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to add customer"
+      );
     }
-  };
+  }, [dataService]);
 
-  const handleFilterChange = (column: SortKey, selectedOptions: string[]) => {
+  const handleSort = useCallback((column: SortKey) => {
+    setSortDirection((currentDirection) =>
+      sortColumn === column && currentDirection === "asc" ? "desc" : "asc"
+    );
+    setSortColumn(column);
+  }, [sortColumn]);
+
+  const handleFilterChange = useCallback((column: SortKey, selectedOptions: string[]) => {
     setFilters((prev) => ({
       ...prev,
       [column]: selectedOptions.length > 0 ? selectedOptions : undefined,
     }));
-  };
+  }, []);
 
   const filteredAndSortedCustomers = useMemo(() => {
     let filteredCustomers = [...customers];
@@ -168,6 +181,14 @@ export default function CustomersPage() {
         if (bValue === null || bValue === undefined)
           return sortDirection === "asc" ? -1 : 1;
 
+        if (sortColumn === "createdAt") {
+          const aDate = new Date(aValue as string);
+          const bDate = new Date(bValue as string);
+          return sortDirection === "asc"
+            ? aDate.getTime() - bDate.getTime()
+            : bDate.getTime() - aDate.getTime();
+        }
+
         const aStr = String(aValue).toLowerCase();
         const bStr = String(bValue).toLowerCase();
         return sortDirection === "asc"
@@ -197,7 +218,7 @@ export default function CustomersPage() {
           <p className="text-muted-foreground mt-1">
             Manage your customer relationships
           </p>
-        </div>{" "}
+        </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button
@@ -233,16 +254,47 @@ export default function CustomersPage() {
                     }
                   : undefined
               }
-              onSubmit={(data) => {
+              onSubmit={async (data) => {
                 if (dialogMode === "edit" && selectedCustomer) {
-                  const updatedCustomers = customers.map((c) =>
-                    c.id === selectedCustomer.id ? { ...c, ...data } : c
-                  );
-                  setCustomers(updatedCustomers);
+                  try {
+                    const response = await dataService.updateCustomer(
+                      selectedCustomer.id,
+                      {
+                        ...data,
+                        createdAt: selectedCustomer.createdAt,
+                      }
+                    );
+                    if (response.error) {
+                      throw new Error(response.error);
+                    }
+
+                    const updatedCustomer = Array.isArray(response.data)
+                      ? response.data[0]
+                      : response.data;
+                    if (!updatedCustomer) {
+                      throw new Error("No customer data received from server");
+                    }
+
+                    setCustomers((prev) =>
+                      prev.map((c) =>
+                        c.id === selectedCustomer.id ? updatedCustomer : c
+                      )
+                    );
+                    setError(undefined);
+                  } catch (error) {
+                    console.error("Error updating customer:", error);
+                    setError(
+                      error instanceof Error
+                        ? error.message
+                        : "Failed to update customer"
+                    );
+                  }
                 } else {
-                  handleAddCustomer(data);
+                  await handleAddCustomer(data);
                 }
                 setDialogOpen(false);
+                setSelectedCustomer(null);
+                setDialogMode("add");
               }}
               onCancel={() => {
                 setDialogOpen(false);
@@ -454,7 +506,7 @@ export default function CustomersPage() {
                         }`}
                       >
                         {customer.status}
-                      </span>{" "}
+                      </span>
                     </TableCell>
                     <TableCell>{customer.createdAt}</TableCell>
                     <TableCell>

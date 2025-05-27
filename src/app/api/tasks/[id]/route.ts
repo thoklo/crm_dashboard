@@ -42,17 +42,15 @@ export async function PUT(
     
     const index = data.tasks.findIndex((t: Task) => t.id === parseInt(params.id));
     if (index === -1) {
-      return NextResponse.json(
-        { error: 'Task not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
-    
     // Create and validate the updated task
+    const existingTask = data.tasks[index];
     const updatedTask = taskSchema.parse({
-      ...data.tasks[index],
+      ...existingTask,
       ...validatedUpdates,
-      id: parseInt(params.id)  // Ensure ID doesn't change
+      id: parseInt(params.id), // Ensure ID doesn't change
+      createdAt: existingTask.createdAt, // Preserve original createdAt
     });
     
     data.tasks[index] = updatedTask;

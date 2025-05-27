@@ -23,8 +23,74 @@ Add two buttons on all Edit and View forms that says Previous and Next, that goe
 
 Add a search bar below the action buttons Add Customer/Create Task and Log Sales where you can search for any data in the table.
 
+DATABASE
+
+The application is designed with a clean separation between the data layer and the UI through the dataService.ts, which supports two modes:
+
+"Demo" mode: Uses generated data with faker.js (currently working)
+"Production" mode: Expected to connect to a real API server (currently not implemented)
+You have several options to implement the "real" data mode:
+
+Supabase Option:
+Easy to set up, provides a PostgreSQL database with built-in API
+Has good TypeScript support and real-time capabilities
+Can be self-hosted or use their cloud service
+
+MongoDB + API Option:
+Set up MongoDB locally or use MongoDB Atlas
+Create a simple Express/Node.js API server
+Store your data in MongoDB collections (tasks, customers, sales)
+
+Local File Storage + Next.js API Routes:
+Use Next.js API routes (add them in src/app/api/)
+Store data in local JSON or SQLite files
+No need for external database or server
+
+Here's what I recommend based on your setup:
+
+Option 1: Next.js API Routes with Local JSON Storage This would be the quickest to implement and requires no external dependencies:
+
+Create API routes in your Next.js app
+Store data in JSON files
+Use the existing dataService.ts structure
+
+Set up Next.js API routes with local JSON storage (simplest)
+Set up Supabase integration (more robust, includes auth)
+Set up MongoDB with a simple Express API (traditional approach)
+Something else you have in mind
 
 
+Add Delete button on the forms to delete an entry
+
+
+TEST
+Adding sales in Powershell
+$body = @{
+    customer = 'Test Customer'
+    product = 'Test Product'
+    amount = 1000
+    status = 'Pending'
+    category = 'Software'
+    date = '2025-05-26T12:00:00.000Z'
+} | ConvertTo-Json;
+Invoke-WebRequest -Uri 'http://localhost:3000/api/sales' -Method Post -Body $body -ContentType 'application/json'
+
+Testing it is there
+Invoke-WebRequest -Uri 'http://localhost:3000/api/sales' -Method Get
+
+$body = @{
+    customer = 'Test Customer'
+    product = 'Test Product'
+    amount = 1000
+    status = 'Completed'
+    category = 'Software'
+    date = '2025-05-27T12:00:00.000Z'
+} | ConvertTo-Json;
+Invoke-WebRequest -Uri 'http://localhost:3000/api/sales/1' -Method Put -Body $body -ContentType 'application/json'
+
+Invoke-WebRequest -Uri 'http://localhost:3000/api/sales/1' -Method Get
+
+WHAT HAS BEEN DONE
 
 The dashboard page should now work correctly with both fake and real data sources. The key changes made are:
 
